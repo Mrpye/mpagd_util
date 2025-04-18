@@ -174,6 +174,7 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	LogMessage("BackupProjectFile", fmt.Sprintf("Starting backup for file: %s", apj.FilePath), "ok")
 
 	// extract the path from apj.FilePath
+
 	backupDir := path.Dir(apj.FilePath)
 	backupDir = path.Join(backupDir, "backups")
 	if err := os.MkdirAll(backupDir, 0755); err != nil {

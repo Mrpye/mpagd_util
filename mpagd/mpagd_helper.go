@@ -204,6 +204,9 @@ func CSVToIntSlice(csv string) []int {
 
 // ensureDirExists ensures that the directory for the given file path exists
 func ensureDirExists(filePath string) error {
+	// convert path to /
+	filePath = strings.ReplaceAll(filePath, "\\", "/")
+
 	dir := path.Dir(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Create the directory if it doesn't exist

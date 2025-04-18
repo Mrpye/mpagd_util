@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/Mrpye/mpagd_util/mpagd"
 	"github.com/spf13/cobra"
@@ -68,7 +69,9 @@ func Cmd_Restore() *cobra.Command {
 			}
 			mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Restoring last backup for file: %s", filePath), "info")
 			// Assuming APJFile is a struct with a method RestoreLastBackup
+			//conver path to /
 
+			filePath = strings.ReplaceAll(filePath, "\\", "/")
 			backupDir := path.Dir(filePath)
 			backupDir = path.Join(backupDir, "backups")
 			apj := mpagd.NewAPJFile(filePath)
@@ -105,7 +108,7 @@ func Cmd_PurgeBackup() *cobra.Command {
 			}
 			mpagd.LogMessage("Cmd_PurgeBackup", fmt.Sprintf("Purging backup files for: %s", filePath), "info")
 			// Assuming APJFile is a struct with a method RestoreLastBackup
-
+			filePath = strings.ReplaceAll(filePath, "\\", "/")
 			backupDir := path.Dir(filePath)
 			backupDir = path.Join(backupDir, "backups")
 			apj := mpagd.NewAPJFile(filePath)
@@ -140,6 +143,7 @@ func Cmd_ListBackups() *cobra.Command {
 			}
 			mpagd.LogMessage("Cmd_ListBackups", fmt.Sprintf("Listing backup files for: %s", filePath), "info")
 			// Assuming APJFile is a struct with a method ListBackupProjectFiles
+			filePath = strings.ReplaceAll(filePath, "\\", "/")
 			backupDir := path.Dir(filePath)
 			backupDir = path.Join(backupDir, "backups")
 			apj := mpagd.NewAPJFile(filePath)
