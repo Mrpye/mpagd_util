@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -86,7 +86,7 @@ func (apj *APJFile) PurgeBackupFiles(backupDir string) error {
 	}
 	for _, file := range backupFiles {
 		// Construct the full path to the backup file
-		backupFilePath := path.Join(backupDir, file)
+		backupFilePath := filepath.Join(backupDir, file)
 		// Delete the backup file
 		err := os.Remove(backupFilePath)
 		if err != nil {
@@ -117,7 +117,7 @@ func (apj *APJFile) RestoreLastBackup(backupDir string, code bool) (string, erro
 
 	// Get the last backup file (the most recent one)
 	lastBackupFile := backupFiles[len(backupFiles)-1]
-	lastBackupFilePath := path.Join(backupDir, lastBackupFile)
+	lastBackupFilePath := filepath.Join(backupDir, lastBackupFile)
 
 	// Open the tar file
 	tarFile, err := os.Open(lastBackupFilePath)
@@ -140,10 +140,10 @@ func (apj *APJFile) RestoreLastBackup(backupDir string, code bool) (string, erro
 		}
 
 		// Construct the full path for the extracted file
-		extractedFilePath := path.Join(path.Dir(apj.FilePath), header.Name)
+		extractedFilePath := filepath.Join(filepath.Dir(apj.FilePath), header.Name)
 
 		// If code is true, add the code to the file name
-		if path.Ext(extractedFilePath) != ".apj" && !code {
+		if filepath.Ext(extractedFilePath) != ".apj" && !code {
 			// Skip files that are not APJ files
 			continue
 		}
@@ -175,16 +175,16 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 
 	// extract the path from apj.FilePath
 
-	backupDir := path.Dir(apj.FilePath)
-	backupDir = path.Join(backupDir, "backups")
+	backupDir := filepath.Dir(apj.FilePath)
+	backupDir = filepath.Join(backupDir, "backups")
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		return err
 	}
 
 	//extract the file name from the path
-	fileName := path.Base(apj.FilePath)
+	fileName := filepath.Base(apj.FilePath)
 	// get the file name without the extension
-	ext := path.Ext(fileName)
+	ext := filepath.Ext(fileName)
 	fileName = strings.TrimSuffix(fileName, ext)
 
 	// Check if the file name is empty
@@ -196,7 +196,7 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	// tar project file and files that begin with the project name excluding extension xxxx.a00   xxxx.a01 ...
 	var projectFiles []string
 	//read the project folder
-	projectFolder := path.Dir(apj.FilePath)
+	projectFolder := filepath.Dir(apj.FilePath)
 	if code {
 		// get the file name without the extension
 		fileName = strings.TrimSuffix(fileName, ".apj")
@@ -236,7 +236,7 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	}
 	// add the project files to the tar file
 	for _, file := range projectFiles {
-		filePath := path.Join(projectFolder, file)
+		filePath := filepath.Join(projectFolder, file)
 		err = addFileToTar(tarWriter, filePath)
 		if err != nil {
 			return err

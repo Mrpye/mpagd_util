@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Mrpye/mpagd_util/project_template"
@@ -26,7 +26,7 @@ func ListTemplates() ([]Template, error) {
 
 	// Iterate through directory entries to find YAML templates
 	for _, entry := range entries {
-		ext := path.Ext(entry.Name())
+		ext := filepath.Ext(entry.Name())
 		if ext == ".yaml" {
 			// Read the template file
 			file, err := project_template.Templates.ReadFile(entry.Name())
@@ -65,8 +65,8 @@ func CreateProjectFromTemplate(projectFile string, templateName string) error {
 	}
 
 	// Extract the file name and directory path
-	fileName := path.Base(projectFile)
-	filePath := path.Dir(projectFile)
+	fileName := filepath.Base(projectFile)
+	filePath := filepath.Dir(projectFile)
 
 	// Create the directory if it doesn't exist
 	if _, err := os.Stat(filePath); err != nil {

@@ -2,7 +2,7 @@ package mpagd
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -16,7 +16,7 @@ type Template struct {
 
 // CreateTemplate creates a new Template instance by extracting the name from the file name.
 func CreateTemplate(fileName, templateType, description string) Template {
-	ext := path.Ext(fileName)
+	ext := filepath.Ext(fileName)
 	name := strings.TrimSuffix(fileName, ext)
 
 	return Template{

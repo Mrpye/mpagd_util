@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -38,9 +38,9 @@ func iCount(v interface{}) uint8 {
 	}
 }
 
-// CopyFile copies a file from the source path to the destination path.
-// src: string - the source file path.
-// dst: string - the destination file path.
+// CopyFile copies a file from the source path to the destination filepath.
+// src: string - the source file filepath.
+// dst: string - the destination file filepath.
 // Returns an error if the operation fails.
 func CopyFile(src, dst string) error {
 	srcFile, err := os.Open(src)
@@ -207,7 +207,7 @@ func ensureDirExists(filePath string) error {
 	// convert path to /
 	filePath = strings.ReplaceAll(filePath, "\\", "/")
 
-	dir := path.Dir(filePath)
+	dir := filepath.Dir(filePath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		// Create the directory if it doesn't exist
 		return os.MkdirAll(dir, os.ModePerm)
