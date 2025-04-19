@@ -171,7 +171,7 @@ func (apj *APJFile) RestoreLastBackup(backupDir string, code bool) (string, erro
 // Backup creates a backup of the APJ file in the same directory as the original file
 func (apj *APJFile) BackupProjectFile(code bool) error {
 	// Log start message with parameters
-	LogMessage("BackupProjectFile", fmt.Sprintf("Starting backup for file: %s", apj.FilePath), "ok")
+	LogMessage("BackupProjectFile", fmt.Sprintf("Starting backup for file: %s", apj.FilePath), "info")
 
 	// extract the path from apj.FilePath
 
@@ -230,14 +230,14 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	tarWriter := tar.NewWriter(tarFile)
 	defer tarWriter.Close()
 	// add the project file to the tar file
-	err = addFileToTar(tarWriter, apj.FilePath)
+	err = AddFileToTar(tarWriter, apj.FilePath)
 	if err != nil {
 		return err
 	}
 	// add the project files to the tar file
 	for _, file := range projectFiles {
 		filePath := filepath.Join(projectFolder, file)
-		err = addFileToTar(tarWriter, filePath)
+		err = AddFileToTar(tarWriter, filePath)
 		if err != nil {
 			return err
 		}
@@ -255,42 +255,6 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	return nil
 }
 
-// addFileToTar adds a file to the tar archive
-func addFileToTar(tarWriter *tar.Writer, filePath string) error {
-	// Open the file to be added to the tar archive
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Get the file info
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return err
-	}
-
-	// Create a tar header for the file
-	header := &tar.Header{
-		Name:    fileInfo.Name(),
-		Size:    fileInfo.Size(),
-		Mode:    int64(fileInfo.Mode()),
-		ModTime: fileInfo.ModTime(),
-	}
-
-	// Write the header to the tar archive
-	if err := tarWriter.WriteHeader(header); err != nil {
-		return err
-	}
-
-	// Write the file content to the tar archive
-	if _, err := io.Copy(tarWriter, file); err != nil {
-
-		return err
-	}
-	return nil
-}
-
 // readChunk reads a chunk of bytes from the file
 func (apj *APJFile) readChunk(f io.Reader, size int) []uint8 {
 	items := make([]uint8, size)
@@ -305,6 +269,7 @@ func (apj *APJFile) readChunk(f io.Reader, size int) []uint8 {
 // MonitorFileChanges monitors the specified file for changes and creates a backup when changes are detected.
 // It uses a polling mechanism to check the file's last modified time every 5 seconds.
 func (apj *APJFile) MonitorFileChanges(code bool) {
+
 	// Check if the file exists
 	if _, err := os.Stat(apj.FilePath); os.IsNotExist(err) {
 		LogMessage("MonitorFileChanges", fmt.Sprintf("File does not exist: %s", apj.FilePath), "error")
@@ -319,10 +284,20 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 	}
 	lastModified := fileInfo.ModTime()
 
+	//Check for ESC key pressed
+	go func() {
+		for {
+			if IsESCKeyPressed() {
+				LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info")
+				os.Exit(0)
+			}
+		}
+	}()
+
 	// Monitor for changes in a loop
 	for {
-		time.Sleep(5 * time.Second) // Check every 5 seconds
-
+		//sleep for 5 seconds
+		time.Sleep(3 * time.Second)
 		// Get the current file info
 		fileInfo, err = os.Stat(apj.FilePath)
 		if err != nil {
@@ -336,6 +311,7 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 			apj.createBackupOnChange(code) // Extracted backup logic into a helper function
 			lastModified = fileInfo.ModTime()
 		}
+
 	}
 }
 
@@ -343,7 +319,5 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 func (apj *APJFile) createBackupOnChange(code bool) {
 	if err := apj.BackupProjectFile(code); err != nil {
 		LogMessage("MonitorFileChanges", fmt.Sprintf("Failed to create backup: %v", err), "error")
-	} else {
-		LogMessage("MonitorFileChanges", "Backup successfully created.", "ok")
 	}
 }

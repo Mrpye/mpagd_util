@@ -1,6 +1,7 @@
 package mpagd
 
 import (
+	"archive/tar"
 	"fmt"
 	"image/color"
 	"io"
@@ -9,7 +10,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	fc "github.com/fatih/color"
+	"golang.org/x/sys/windows"
 )
+
+var user32_dll = windows.NewLazyDLL("user32.dll")
+var GetKeyState = user32_dll.NewProc("GetKeyState")
 
 // padSlice ensures the slice has the specified size by appending zeros if necessary.
 // size: int - the desired size of the slice.
@@ -68,44 +75,39 @@ func CopyFile(src, dst string) error {
 // message: string - the log message.
 // level: string - the log level ("ok", "warning", "error").
 func LogMessage(element, message, level string) {
-	// Define color codes
-	const (
-		green  = "\033[32m"
-		orange = "\033[33m"
-		red    = "\033[31m"
-		blue   = "\033[34m" // Added blue color
-		yellow = "\033[93m" // Added yellow color
-		white  = "\033[37m"
-		reset  = "\033[0m"
-	)
+	// Define color functions for different log levels
+	yellow := fc.New(fc.FgYellow).SprintFunc()
+	red := fc.New(fc.FgRed).SprintFunc()
+	green := fc.New(fc.FgGreen).SprintFunc()
+	orange := fc.New(fc.FgHiYellow).SprintFunc()
+	blue := fc.New(fc.FgBlue).SprintFunc()
+	white := fc.New(fc.FgWhite).SprintFunc()
+	reset := fc.New(fc.Reset).SprintFunc()
 
 	// Determine color based on log level
 	var elementColor, messageColor string
 	switch level {
 	case "ok":
-		elementColor = green
-		messageColor = white
+		elementColor = green(element)
+		messageColor = white(message)
 	case "warning":
-		elementColor = orange
-		messageColor = white
+		elementColor = orange(element)
+		messageColor = white(message)
 	case "error":
-		elementColor = red
-		messageColor = white
+		elementColor = red(element)
+		messageColor = white(message)
 	case "info": // Added yellow level
-		elementColor = yellow
-		messageColor = white
+		elementColor = yellow(element)
+		messageColor = white(message)
 	default:
-		elementColor = white
-		messageColor = white
+		elementColor = white(element)
+		messageColor = white(message)
 	}
 
 	// Format and display the log message
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Printf("%s[%s]%s %s[%s]%s %s%s%s\n",
-		blue, timestamp, reset,
-		elementColor, element, reset,
-		messageColor, message, reset,
-	)
+	fmt.Fprintf(fc.Output, "[%s] [%s] %s %s\n", blue(timestamp), elementColor, messageColor, reset())
+
 }
 
 // SpectrumAttrToColors converts a Spectrum attribute byte to foreground and background colors.
@@ -213,4 +215,46 @@ func ensureDirExists(filePath string) error {
 		return os.MkdirAll(dir, os.ModePerm)
 	}
 	return nil
+}
+
+// addFileToTar adds a file to the tar archive
+func AddFileToTar(tarWriter *tar.Writer, filePath string) error {
+	// Open the file to be added to the tar archive
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Get the file info
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	// Create a tar header for the file
+	header := &tar.Header{
+		Name:    fileInfo.Name(),
+		Size:    fileInfo.Size(),
+		Mode:    int64(fileInfo.Mode()),
+		ModTime: fileInfo.ModTime(),
+	}
+
+	// Write the header to the tar archive
+	if err := tarWriter.WriteHeader(header); err != nil {
+		return err
+	}
+
+	// Write the file content to the tar archive
+	if _, err := io.Copy(tarWriter, file); err != nil {
+
+		return err
+	}
+	return nil
+}
+
+// IsKeyPressed checks if a specific key is pressed.
+func IsESCKeyPressed() bool {
+	r1, _, _ := GetKeyState.Call(27) // Call API to get ESC key state.
+	return r1 == 65409               // Code for KEY_UP event of ESC key.
 }
