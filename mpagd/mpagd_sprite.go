@@ -33,6 +33,8 @@ type Sprite struct {
 	VZColour   []SpriteFrame
 }
 
+// CreateSprite creates a new sprite with the given ID, offset, and number of frames
+// It initializes the sprite's frame data for different platforms.
 func (apj *APJFile) createSprite(id, offset, frames uint8) Sprite {
 	return Sprite{
 		SpriteID:   id,
@@ -63,6 +65,7 @@ func (apj *APJFile) readSpriteData(f io.Reader, frames int, size int) []SpriteFr
 	return items
 }
 
+// SpriteInit initializes the sprite data structure
 func (apj *APJFile) SpriteInit(overwrite bool) {
 	if apj.Sprites == nil || overwrite {
 		apj.Sprites = make([]Sprite, 0)
@@ -70,6 +73,7 @@ func (apj *APJFile) SpriteInit(overwrite bool) {
 	}
 }
 
+// SetFrameDefaults initializes the frame data for a sprite
 func (apj *APJFile) SetFrameDefaults(sprite *Sprite) {
 	sprite.Spectrum = make([]SpriteFrame, 0)
 	sprite.Timex = make([]SpriteFrame, 0)
@@ -106,7 +110,7 @@ func (apj *APJFile) SetFrameDefaults(sprite *Sprite) {
 	}
 }
 
-// CREATE SPRITE DEFAULTS
+// SpriteDefault initializes the default sprite data structure
 func (apj *APJFile) SpriteDefault() {
 	if len(apj.Sprites) == 0 {
 		apj.Sprites = make([]Sprite, 0)
@@ -125,34 +129,11 @@ func (apj *APJFile) SpriteDefault() {
 		apj.NrOfSprites = 1
 		for i := 0; i < 1; i++ {
 			apj.SetFrameDefaults(&apj.Sprites[0])
-			/*apj.Sprites[0].Spectrum = append(apj.Sprites[0].Spectrum, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 32),
-			})
-			apj.Sprites[0].Timex = append(apj.Sprites[0].Timex, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 32),
-			})
-			apj.Sprites[0].CPC = append(apj.Sprites[0].CPC, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 80),
-			})
-			apj.Sprites[0].Atom = append(apj.Sprites[0].Atom, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 32),
-			})
-			apj.Sprites[0].AtomColour = append(apj.Sprites[0].AtomColour, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 32),
-			})
-			apj.Sprites[0].VZColour = append(apj.Sprites[0].VZColour, SpriteFrame{
-				Frame:     i,
-				ImageData: make([]uint8, 16),
-			})*/
 		}
 	}
 }
 
+// ImportSprites imports sprite data from a list of strings
 func (apj *APJFile) ImportSprites(lines []string) error {
 
 	// Setup vars and regex
@@ -230,6 +211,7 @@ func (apj *APJFile) ImportSprites(lines []string) error {
 	return nil
 }
 
+// CalcImageSize calculates the image size based on the number of sprites and layout
 func (apj *APJFile) CalcOffset() {
 	offset := uint8(0)
 	for i, sprite := range apj.Sprites {
@@ -238,7 +220,7 @@ func (apj *APJFile) CalcOffset() {
 	}
 }
 
-// readSprite reads sprite data
+// readSprite reads sprite data from a binary file and populates the APJFile structure
 func (apj *APJFile) readSprite(f io.Reader) error {
 	var nrOfSprites uint8
 	if err := binary.Read(f, binary.LittleEndian, &nrOfSprites); err != nil {
@@ -282,6 +264,7 @@ func (apj *APJFile) readSprite(f io.Reader) error {
 	return nil
 }
 
+// writeSprite writes sprite data to a binary file
 func (apj *APJFile) writeSprite(f io.Writer) error {
 	if err := binary.Write(f, binary.LittleEndian, apj.NrOfSprites); err != nil {
 		return err
@@ -342,6 +325,7 @@ func (apj *APJFile) writeSprite(f io.Writer) error {
 	return nil
 }
 
+// RotateSprite rotates a sprite by 90 degrees clockwise or counter-clockwise
 func (apj *APJFile) RotateSprite(spriteIndex uint8, ccw bool, retain bool) (uint8, error) {
 	// Check if the sprite index is valid
 	if spriteIndex >= uint8(len(apj.Sprites)) {
@@ -379,6 +363,8 @@ func (apj *APJFile) RotateSprite(spriteIndex uint8, ccw bool, retain bool) (uint
 	//apj.Blocks[spriteIndex].AtomColour = rotate90CW(apj.Blocks[spriteIndex].AtomColour, 8, 8)
 	return uint8(len(apj.Sprites) - 1), nil
 }
+
+// RotateSprite rotates a sprite by 90 degrees clockwise or counter-clockwise
 func spriteRotate90(data []uint8, ccw bool) []uint8 {
 	rotated := make([]uint8, len(data))
 	// need to convert the number into binary 10101010 into a 2d array 8x8
@@ -440,6 +426,9 @@ func spriteRotate90(data []uint8, ccw bool) []uint8 {
 
 	return rotated
 }
+
+// SpriteTo2DArray converts a sprite's image data into a 2D array representation
+// It assumes the sprite is 16x16 pixels and each pixel is represented by a bit in the byte array.
 func (apj *APJFile) SpriteTo2DArray(data []uint8) ([][]uint8, error) {
 
 	var screen = make([][]uint8, 16)
@@ -474,6 +463,7 @@ func (apj *APJFile) SpriteTo2DArray(data []uint8) ([][]uint8, error) {
 
 }
 
+// GetReorderedSprites returns a reordered list of sprites based on the provided order and offset
 func (apj *APJFile) GetReorderedSprites(order []int, offset int) ([]Sprite, error) {
 	if len(order)+offset > len(apj.Sprites) {
 		return nil, fmt.Errorf("order list exceeds the number of sprites")
@@ -574,6 +564,9 @@ func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath st
 
 	return nil
 }
+
+// RenderSpriteToTerminal renders a range of sprites to the terminal using tcg
+// This function assumes that the terminal supports 2x3 pixel characters
 func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder []int, offset int) error {
 	if startIndex >= uint8(len(apj.Sprites)) || endIndex > uint8(len(apj.Sprites)) {
 		return fmt.Errorf("sprite index out of range: %d", startIndex)
@@ -626,19 +619,28 @@ func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder [
 
 }
 
+// ReorderSprites reorders the sprites based on the provided order and offset
+// It updates the sprite IDs in the SpriteInfo array accordingly
 func (apj *APJFile) ReorderSprites(order []int, offset int) error {
 	newSprites, err := apj.GetReorderedSprites(order, offset)
 	if err != nil {
 		return fmt.Errorf("failed to reorder sprites: %s", err)
 	}
 
+	//Update the sprite IDs in the SpriteInfo array
+	reordered := make(map[int]bool, len(apj.SpriteInfo))
 	for i, sprite := range newSprites {
-		sprite.SpriteID = uint8(i)
-		sprite.OffSet = uint8(i)      // Update the offset if needed
-		sprite.Frames = sprite.Frames // Update the frames if needed
+		for j, spritePos := range apj.SpriteInfo {
+			if spritePos.Image == sprite.SpriteID && !reordered[j] {
+				reordered[j] = true
+				apj.SpriteInfo[j].Image = uint8(i)
+			}
+		}
+		newSprites[i].SpriteID = uint8(i)
 	}
 
 	apj.Sprites = newSprites
 	apj.NrOfSprites = uint8(len(apj.Sprites))
+	apj.CalcOffset() // Recalculate offsets after reordering
 	return nil
 }

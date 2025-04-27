@@ -30,7 +30,7 @@ func Cmd_ImportMap() *cobra.Command {
 			}
 
 			// Log the start of the import process
-			mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info")
+			mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info", noColor)
 
 			// Read the APJ file
 			apj := mpagd.NewAPJFile(apjFilePath)
@@ -44,7 +44,7 @@ func Cmd_ImportMap() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Backup created: %s", outputFilePath), "ok")
+				mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Backup created: %s", outputFilePath), "ok", noColor)
 			}
 
 			// Configure import options
@@ -58,7 +58,7 @@ func Cmd_ImportMap() *cobra.Command {
 			}
 
 			// Log the successful completion of the import
-			mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Map imported successfully. Updated APJ file saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportMap", fmt.Sprintf("Map imported successfully. Updated APJ file saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}

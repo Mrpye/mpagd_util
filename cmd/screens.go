@@ -34,7 +34,7 @@ func Cmd_ImportScreens() *cobra.Command {
 			}
 
 			// Log the start of the import process
-			mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info")
+			mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info", noColor)
 
 			// Read the APJ file
 			apj := mpagd.NewAPJFile(apjFilePath)
@@ -47,7 +47,7 @@ func Cmd_ImportScreens() *cobra.Command {
 				if err := apj.BackupProjectFile(false); err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Backup created: %s", outputFilePath), "ok")
+				mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Backup created: %s", outputFilePath), "ok", noColor)
 			}
 
 			// Configure import options
@@ -61,7 +61,7 @@ func Cmd_ImportScreens() *cobra.Command {
 			}
 
 			// Log the successful completion of the import
-			mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Screens imported successfully. Updated APJ file saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportScreens", fmt.Sprintf("Screens imported successfully. Updated APJ file saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}
@@ -85,7 +85,7 @@ func Cmd_RenderScreensToBitmap() *cobra.Command {
 			outputFilePath := args[2]
 
 			// Log the start of the render process
-			mpagd.LogMessage("Cmd_RenderScreens", fmt.Sprintf("Starting render for file: %s, screen ID: %s", apjFilePath, screenID), "info")
+			mpagd.LogMessage("Cmd_RenderScreens", fmt.Sprintf("Starting render for file: %s, screen ID: %s", apjFilePath, screenID), "info", noColor)
 
 			// Read the APJ file
 			apj := mpagd.NewAPJFile(apjFilePath)
@@ -105,7 +105,7 @@ func Cmd_RenderScreensToBitmap() *cobra.Command {
 			}
 
 			// Log the successful completion of the render
-			mpagd.LogMessage("Cmd_RenderScreens", fmt.Sprintf("Screen rendered successfully. Output saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_RenderScreens", fmt.Sprintf("Screen rendered successfully. Output saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}

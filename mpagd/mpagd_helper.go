@@ -74,7 +74,7 @@ func CopyFile(src, dst string) error {
 // element: string - the element being logged.
 // message: string - the log message.
 // level: string - the log level ("ok", "warning", "error").
-func LogMessage(element, message, level string) {
+func LogMessage(element, message, level string, noColor bool) {
 	// Define color functions for different log levels
 	yellow := fc.New(fc.FgYellow).SprintFunc()
 	red := fc.New(fc.FgRed).SprintFunc()
@@ -106,7 +106,11 @@ func LogMessage(element, message, level string) {
 
 	// Format and display the log message
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Fprintf(fc.Output, "[%s] [%s] %s %s\n", blue(timestamp), elementColor, messageColor, reset())
+	if noColor {
+		fmt.Printf("[%s] [%s] %s\n", timestamp, element, message)
+	} else {
+		fmt.Fprintf(fc.Output, "[%s] [%s] %s %s\n", blue(timestamp), elementColor, messageColor, reset())
+	}
 
 }
 

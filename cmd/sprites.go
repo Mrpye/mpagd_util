@@ -35,7 +35,7 @@ func Cmd_ImportSprites() *cobra.Command {
 				outputFilePath = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Starting import for file: %s", apjFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Starting import for file: %s", apjFilePath), "ok", noColor)
 
 			apj := mpagd.NewAPJFile(apjFilePath)
 			if err := apj.ReadAPJ(); err != nil {
@@ -47,7 +47,7 @@ func Cmd_ImportSprites() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Backup created: %s", outputFilePath), "ok")
+				mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Backup created: %s", outputFilePath), "ok", noColor)
 			}
 
 			options := mpagd.CreateImportOptions()
@@ -58,7 +58,7 @@ func Cmd_ImportSprites() *cobra.Command {
 				return fmt.Errorf("failed to import Sprites from AGD file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Sprites imported successfully. Updated APJ file saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportSprites", fmt.Sprintf("Sprites imported successfully. Updated APJ file saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}
@@ -87,7 +87,7 @@ func Cmd_RotateSpritesCCW90() *cobra.Command {
 				outFile = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_RotateSpritesCCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "ok")
+			mpagd.LogMessage("Cmd_RotateSpritesCCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "ok", noColor)
 
 			apjFile := mpagd.NewAPJFile(inFile)
 			err = apjFile.ReadAPJ()
@@ -101,7 +101,7 @@ func Cmd_RotateSpritesCCW90() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Backup created: %s", inFile), "ok")
+				mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
 			}
 
 			// Rotate sprites
@@ -137,7 +137,7 @@ func Cmd_RotateSpritesCCW90() *cobra.Command {
 				return fmt.Errorf("failed to write APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_RotateSpritesCCW90", fmt.Sprintf("Rotation completed for sprite number %d", spriteNumber), "ok")
+			mpagd.LogMessage("Cmd_RotateSpritesCCW90", fmt.Sprintf("Rotation completed for sprite number %d", spriteNumber), "ok", noColor)
 			return nil
 		},
 	}
@@ -169,7 +169,7 @@ func Cmd_RotateSpritesCW90() *cobra.Command {
 				outFile = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "ok")
+			mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "ok", noColor)
 
 			apjFile := mpagd.NewAPJFile(inFile)
 			err = apjFile.ReadAPJ()
@@ -183,7 +183,7 @@ func Cmd_RotateSpritesCW90() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Backup created: %s", inFile), "ok")
+				mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
 			}
 
 			// Rotate sprites
@@ -219,7 +219,7 @@ func Cmd_RotateSpritesCW90() *cobra.Command {
 				return fmt.Errorf("failed to write APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Rotation completed for sprite number %d", spriteNumber), "ok")
+			mpagd.LogMessage("Cmd_RotateSpritesCW90", fmt.Sprintf("Rotation completed for sprite number %d", spriteNumber), "ok", noColor)
 			return nil
 		},
 	}
@@ -368,6 +368,62 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 	return cmd
 }
 
+// Cmd_ReorderSprites creates a command to reorder sprites in the MPAGD project.
+func Cmd_ReorderSprites() *cobra.Command {
+	var offset int
+	var cmd = &cobra.Command{
+		Use:   "reorder [project file] [order] [[output file]]",
+		Short: "Reorder sprites in the MPAGD project.",
+		Long:  `Reorder sprites in the MPAGD project based on the specified order.`,
+		Args:  cobra.MinimumNArgs(2), // Ensure at least 2 arguments are provided
+		RunE: func(cmd *cobra.Command, args []string) error {
+			inFile := args[0]
+			orderStr := args[1]
+			outFile := inFile // Default to the input file if no output file is provided
+			if len(args) == 3 {
+				outFile = args[2]
+			}
+
+			mpagd.LogMessage("Cmd_ReorderSprites", fmt.Sprintf("Starting reorder for file: %s", inFile), "info", noColor)
+
+			apjFile := mpagd.NewAPJFile(inFile)
+			err := apjFile.ReadAPJ()
+			if err != nil {
+				return fmt.Errorf("failed to read APJ file: %w", err)
+			}
+
+			// If the output file is the same as the input file, create a backup
+			if outFile == inFile {
+				err := apjFile.BackupProjectFile(false)
+				if err != nil {
+					return fmt.Errorf("failed to create backup: %w", err)
+				}
+				mpagd.LogMessage("Cmd_ReorderSprites", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
+			}
+
+			// Convert the order string to a slice of integers
+			order := mpagd.CSVToIntSlice(orderStr)
+
+			// Reorder sprites
+			err = apjFile.ReorderSprites(order, offset)
+			if err != nil {
+				return fmt.Errorf("failed to reorder sprites: %w", err)
+			}
+
+			// Write the updated APJ file
+			err = apjFile.WriteAPJ(outFile)
+			if err != nil {
+				return fmt.Errorf("failed to write APJ file: %w", err)
+			}
+
+			mpagd.LogMessage("Cmd_ReorderSprites", "Reorder completed successfully", "ok", noColor)
+			return nil
+		},
+	}
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering sprites reference the sprites 0 to n-1 0 been the offset position")
+	return cmd
+}
+
 func init() {
 	RootCmd.AddCommand(spriteCmd)
 	spriteCmd.AddCommand(Cmd_ImportSprites())
@@ -376,4 +432,5 @@ func init() {
 	spriteRotateCmd.AddCommand(Cmd_RotateSpritesCCW90())
 	spriteRotateCmd.AddCommand(Cmd_RotateSpritesCW90())
 	spriteCmd.AddCommand(Cmd_RenderSpriteToBitmap())
+	spriteCmd.AddCommand(Cmd_ReorderSprites())
 }

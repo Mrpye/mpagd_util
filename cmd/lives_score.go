@@ -34,7 +34,7 @@ func Cmd_ImportLivesScore() *cobra.Command {
 			}
 
 			// Log the start of the import process.
-			mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info")
+			mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info", noColor)
 
 			// Read the APJ file.
 			apj := mpagd.NewAPJFile(apjFilePath)
@@ -48,7 +48,7 @@ func Cmd_ImportLivesScore() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("Backup created: %s", outputFilePath), "ok")
+				mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("Backup created: %s", outputFilePath), "ok", noColor)
 			}
 
 			// Configure import options.
@@ -62,7 +62,7 @@ func Cmd_ImportLivesScore() *cobra.Command {
 			}
 
 			// Log the successful completion of the import process.
-			mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("LivesScore imported successfully. Updated APJ file saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportLivesScore", fmt.Sprintf("LivesScore imported successfully. Updated APJ file saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}
