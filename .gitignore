@@ -23,6 +23,7 @@ fake/
 projects/
 blank.*
 events.*
+*.zip
 *.agd
 *.apj
 /output/*

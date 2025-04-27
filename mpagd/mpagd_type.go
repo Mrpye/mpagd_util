@@ -50,6 +50,7 @@ type State struct {
 
 // APJFile represents the structure of an APJ file with all its components.
 type APJFile struct {
+	noColor        bool
 	FilePath       string
 	Description    string
 	Windows        Windows
@@ -74,10 +75,15 @@ type APJFile struct {
 	ULAPalette     ULAPalette
 }
 
+func (apj *APJFile) SetNoColorOutput(noColor bool) {
+	apj.noColor = noColor
+}
+
 // NewAPJFile creates a new APJFile instance with default values.
 func NewAPJFile(filePath string) *APJFile {
 	o := &APJFile{
 		FilePath: filePath,
+		noColor:  false,
 		Header:   make([]uint8, 4),
 		Version:  10,
 		Keys:     []uint8{87, 83, 65, 68, 32, 74, 72, 49, 50, 51, 52}, // Default key mappings
