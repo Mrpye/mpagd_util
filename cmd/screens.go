@@ -112,9 +112,64 @@ func Cmd_RenderScreensToBitmap() *cobra.Command {
 	return cmd
 }
 
+// Cmd_ReorderScreens creates a command to reorder screens in an APJ file.
+func Cmd_ReorderScreens() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "reorder [apj file] [order] [[output file]]",
+		Short: "Reorder screens in an APJ file.",
+		Long:  `Reorders the screens in an APJ file based on the provided order. The order should be a comma-separated list of screen indices.`,
+		Args:  cobra.MinimumNArgs(2), // Ensure at least 2 arguments are provided
+		RunE: func(cmd *cobra.Command, args []string) error {
+			inFile := args[0]
+			orderStr := args[1]
+			outFile := inFile // Default to the input file if no output file is provided
+			if len(args) == 3 {
+				outFile = args[2]
+			}
+
+			mpagd.LogMessage("Cmd_ReorderScreens", fmt.Sprintf("Starting reorder of screens for file: %s", inFile), "info", noColor)
+
+			apjFile := mpagd.NewAPJFile(inFile)
+			err := apjFile.ReadAPJ()
+			if err != nil {
+				return fmt.Errorf("failed to read APJ file: %w", err)
+			}
+
+			// If the output file is the same as the input file, create a backup
+			if outFile == inFile {
+				err := apjFile.BackupProjectFile(false)
+				if err != nil {
+					return fmt.Errorf("failed to create backup: %w", err)
+				}
+				mpagd.LogMessage("Cmd_ReorderScreens", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
+			}
+
+			// Convert the order string to a slice of integers
+			order := mpagd.CSVToIntSlice(orderStr)
+
+			// Reorder sprites
+			err = apjFile.ReorderScreens(order)
+			if err != nil {
+				return fmt.Errorf("failed to reorder sprites: %w", err)
+			}
+
+			// Write the updated APJ file
+			err = apjFile.WriteAPJ(outFile)
+			if err != nil {
+				return fmt.Errorf("failed to write APJ file: %w", err)
+			}
+
+			mpagd.LogMessage("Cmd_ReorderScreens", "Reorder completed successfully", "ok", noColor)
+			return nil
+		},
+	}
+	return cmd
+}
+
 // Initialize the screens command and its subcommands
 func init() {
 	RootCmd.AddCommand(screensCmd)
 	screensCmd.AddCommand(Cmd_ImportScreens())
 	screensCmd.AddCommand(Cmd_RenderScreensToBitmap())
+	screensCmd.AddCommand(Cmd_ReorderScreens())
 }

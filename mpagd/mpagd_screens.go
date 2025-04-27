@@ -7,6 +7,7 @@ import (
 	"image/png"
 	"io"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -209,5 +210,52 @@ func (apj *APJFile) RenderScreenToBitmap(screenIndex uint8, filePath string) err
 		return err
 	}
 
+	return nil
+}
+
+// ReorderScreens reorders the screens based on the provided order slice.
+// The order slice should contain the new indices for the screens.
+func (apj *APJFile) ReorderScreens(order []int) error {
+	if len(order) != len(apj.Screens) {
+		return fmt.Errorf("order length does not match the number of screens")
+	}
+
+	newScreens := make([]Screen, len(apj.Screens))
+	for newIndex, oldIndex := range order {
+		if int(oldIndex) >= len(apj.Screens) {
+			return fmt.Errorf("invalid screen index in order: %d", oldIndex)
+		}
+		newScreens[newIndex] = apj.Screens[oldIndex]
+	}
+
+	//update the apj.Map
+	for y := 0; y < len(apj.Map.Map); y++ {
+		for x := 0; x < len(apj.Map.Map[y]); x++ {
+			screenID := apj.Map.Map[y][x]
+			if int(screenID) < len(order) {
+				apj.Map.Map[y][x] = uint8(order[screenID])
+			}
+		}
+	}
+	apj.Map.StartScreen = uint8(order[apj.Map.StartScreen]) // Update the start screen ID in the map
+
+	//update spriteinfo
+	for i := 0; i < len(apj.SpriteInfo); i++ {
+		screenID := apj.SpriteInfo[i].Screen
+		if int(screenID) < len(order) {
+			apj.SpriteInfo[i].Screen = uint8(order[screenID])
+		}
+	}
+	//sorting the apj.SpriteInfo by screen ID
+	sort.Slice(apj.SpriteInfo, func(i, j int) bool {
+		return apj.SpriteInfo[i].Screen < apj.SpriteInfo[j].Screen
+	})
+
+	// Update the ScreenID for each screen in the new order
+	for i := 0; i < len(newScreens); i++ {
+		newScreens[i].ScreenID = uint8(i) // Update the ScreenID to match the new order
+	}
+	apj.NrOfScreens = uint8(len(newScreens))
+	apj.Screens = newScreens
 	return nil
 }
