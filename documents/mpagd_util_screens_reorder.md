@@ -1,13 +1,13 @@
-## mpagd_util screens render-bmp
+## mpagd_util screens reorder
 
-Render a screen from an APJ file to a bitmap image.
+Reorder screens in an APJ file.
 
 ### Synopsis
 
-Renders a specific screen from an APJ file and saves it as a bitmap image in PNG format.
+Reorders the screens in an APJ file based on the provided order. The order should be a comma-separated list of screen indices.
 
 ```
-mpagd_util screens render-bmp [apj file] [screen id] [bitmap file] [flags]
+mpagd_util screens reorder [apj file] [order] [[output file]] [flags]
 ```
 
 ### Options inherited from parent commands

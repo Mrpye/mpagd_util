@@ -78,7 +78,7 @@ func (apj *APJFile) ListBackupProjectFiles(backupDir string) ([]string, error) {
 // PurgeBackupFiles purges the backup files in the backup directory
 func (apj *APJFile) PurgeBackupFiles(backupDir string) error {
 	// Log start message with parameters
-	LogMessage("PurgeBackupFiles", fmt.Sprintf("Starting purge for backup directory: %s", backupDir), "ok")
+	LogMessage("PurgeBackupFiles", fmt.Sprintf("Starting purge for backup directory: %s", backupDir), "ok", apj.noColor)
 	// List the backup files
 	backupFiles, err := apj.ListBackupProjectFiles(backupDir)
 	if err != nil {
@@ -93,7 +93,8 @@ func (apj *APJFile) PurgeBackupFiles(backupDir string) error {
 			return fmt.Errorf("failed to delete backup file: %w", err)
 		}
 		// Log success message
-		LogMessage("PurgeBackupFiles", fmt.Sprintf("Successfully deleted backup file: %s", backupFilePath), "ok")
+		LogMessage("PurgeBackupFiles", fmt.Sprintf("Successfully deleted backup file: %s", backupFilePath), "ok", apj.noColor)
+		// List the backup files)
 
 	}
 	return nil
@@ -102,7 +103,8 @@ func (apj *APJFile) PurgeBackupFiles(backupDir string) error {
 // Restore the last backup file
 func (apj *APJFile) RestoreLastBackup(backupDir string, code bool) (string, error) {
 	// Log start message with parameters
-	LogMessage("RestoreLastBackup", fmt.Sprintf("Starting restore from backup directory: %s", backupDir), "ok")
+	LogMessage("RestoreLastBackup", fmt.Sprintf("Starting restore from backup directory: %s", backupDir), "ok", apj.noColor)
+	// List the backup files)
 
 	// List the backup files
 	backupFiles, err := apj.ListBackupProjectFiles(backupDir)
@@ -164,14 +166,15 @@ func (apj *APJFile) RestoreLastBackup(backupDir string, code bool) (string, erro
 	}
 
 	// Log success message
-	LogMessage("RestoreLastBackup", fmt.Sprintf("Successfully restored backup file: %s", lastBackupFile), "ok")
+	LogMessage("RestoreLastBackup", fmt.Sprintf("Successfully restored backup file: %s", lastBackupFile), "ok", apj.noColor)
+	// List the backup files)
 	return lastBackupFile, nil
 }
 
 // Backup creates a backup of the APJ file in the same directory as the original file
 func (apj *APJFile) BackupProjectFile(code bool) error {
 	// Log start message with parameters
-	LogMessage("BackupProjectFile", fmt.Sprintf("Starting backup for file: %s", apj.FilePath), "info")
+	LogMessage("BackupProjectFile", fmt.Sprintf("Starting backup for file: %s", apj.FilePath), "info", apj.noColor)
 
 	// extract the path from apj.FilePath
 
@@ -251,7 +254,7 @@ func (apj *APJFile) BackupProjectFile(code bool) error {
 	//CopyFile(apj.FilePath, backupFileName)
 
 	// Log success message after creating the backup
-	LogMessage("BackupProjectFile", fmt.Sprintf("Backup created: %s", backupFileName), "ok")
+	LogMessage("BackupProjectFile", fmt.Sprintf("Backup created: %s", backupFileName), "ok", apj.noColor)
 	return nil
 }
 
@@ -272,14 +275,14 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 
 	// Check if the file exists
 	if _, err := os.Stat(apj.FilePath); os.IsNotExist(err) {
-		LogMessage("MonitorFileChanges", fmt.Sprintf("File does not exist: %s", apj.FilePath), "error")
+		LogMessage("MonitorFileChanges", fmt.Sprintf("File does not exist: %s", apj.FilePath), "error", apj.noColor)
 		return
 	}
 
 	// Get the initial file info and last modified time
 	fileInfo, err := os.Stat(apj.FilePath)
 	if err != nil {
-		LogMessage("MonitorFileChanges", "Error getting file info", "error")
+		LogMessage("MonitorFileChanges", "Error getting file info", "error", apj.noColor)
 		return
 	}
 	lastModified := fileInfo.ModTime()
@@ -288,7 +291,7 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 	go func() {
 		for {
 			if IsESCKeyPressed() {
-				LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info")
+				LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info", apj.noColor)
 				os.Exit(0)
 			}
 		}
@@ -301,13 +304,13 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 		// Get the current file info
 		fileInfo, err = os.Stat(apj.FilePath)
 		if err != nil {
-			LogMessage("MonitorFileChanges", "Error getting file info", "error")
+			LogMessage("MonitorFileChanges", "Error getting file info", "error", apj.noColor)
 			return
 		}
 
 		// Check if the file's last modified time has changed
 		if fileInfo.ModTime() != lastModified {
-			LogMessage("MonitorFileChanges", "File has changed, creating backup...", "warning")
+			LogMessage("MonitorFileChanges", "File has changed, creating backup...", "warning", apj.noColor)
 			apj.createBackupOnChange(code) // Extracted backup logic into a helper function
 			lastModified = fileInfo.ModTime()
 		}
@@ -318,6 +321,6 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 // createBackupOnChange handles the backup creation when a file change is detected.
 func (apj *APJFile) createBackupOnChange(code bool) {
 	if err := apj.BackupProjectFile(code); err != nil {
-		LogMessage("MonitorFileChanges", fmt.Sprintf("Failed to create backup: %v", err), "error")
+		LogMessage("MonitorFileChanges", fmt.Sprintf("Failed to create backup: %v", err), "error", apj.noColor)
 	}
 }
