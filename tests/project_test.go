@@ -419,3 +419,38 @@ func TestBlockReorderOffset(t *testing.T) {
 		compareSpectrumData(t, oldData[i], apjFile.Blocks[newIndex].Spectrum, newIndex)
 	}
 }
+
+func TestScreenReorder(t *testing.T) {
+	newOrder := []int{6, 4, 2, 3, 1, 5, 0, 7, 8, 9}
+	CleanOutputFolder()
+	filePath := "splat.apj" // Replace with the actual file path
+	apjFile := mpagd.NewAPJFile(filePath)
+	err := apjFile.ReadAPJ()
+	if err != nil {
+		t.Fatalf("Error reading APJ file: %v", err)
+	}
+
+	// Store old spectrum data for comparison
+	oldData := make([][]byte, len(apjFile.Screens))
+	for i := range apjFile.Screens {
+		oldData[i] = apjFile.Screens[i].ScreenData[0]
+	}
+
+	// Reorder sprites
+	err = apjFile.ReorderScreens(newOrder)
+	if err != nil {
+		t.Fatalf("Error reordering sprites: %v", err)
+	}
+
+	outputFilePath := "output/output.apj" // Replace with the other file path
+	err = apjFile.WriteAPJ(outputFilePath)
+	if err != nil {
+		t.Fatalf("Error writing APJ file: %v", err)
+	}
+
+	// Compare spectrum data after reordering
+	for i, newIndex := range newOrder {
+		compareSpectrumData(t, oldData[i], apjFile.Screens[newIndex].ScreenData[0], newIndex)
+	}
+
+}
