@@ -14,6 +14,7 @@ This utility provides additional functionality to manage and manipulate MPAGD pr
 - **Rotate Sprites and Blocks**: Enables you to easily rotate blocks and sprites and easily create a fully rotated sprite from a single sprite or block.
 - **Display Sprites and Blocks**: Render sprites and blocks directly in the terminal or to bitmap for quick visualization.
 - **Reorder Sprites and Blocks**: Adjust the sequence of sprites and blocks within a project to better suit your design needs, automatically updating their references throughout the project to maintain consistency.
+- **Reorder Screens**: Rearrange the order of screens in a project, ensuring references are updated to maintain consistency.
 
 ## Use Cases
 
@@ -204,6 +205,17 @@ mpagd_util blocks reorder [project file] "0,1,2,10,7,8,9,15,3,4,5,6"
 ```
 
 ![Alt text](documents/images/reordered-blocks-editor.jpg "reordered-blocks-editor")
+
+</details>
+
+### Reorder Screens Examples
+
+<details>
+<summary>1. Reorder screens in a project file:</summary>
+
+```bash
+mpagd_util screens reorder [project file] "0,3,1,2,4,5"
+```
 
 </details>
 

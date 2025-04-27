@@ -45,7 +45,7 @@ func Cmd_RotateBlockCCW90() *cobra.Command {
 				outFile = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "info")
+			mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "info", noColor)
 
 			apjFile := mpagd.NewAPJFile(inFile)
 			err = apjFile.ReadAPJ()
@@ -59,7 +59,7 @@ func Cmd_RotateBlockCCW90() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Backup created: %s", inFile), "ok")
+				mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
 			}
 
 			// Rotate blocks
@@ -72,7 +72,7 @@ func Cmd_RotateBlockCCW90() *cobra.Command {
 					}
 					if add {
 						currentBlock = int(processedBlock)
-						mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok")
+						mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok", noColor)
 					}
 				}
 			} else {
@@ -85,7 +85,7 @@ func Cmd_RotateBlockCCW90() *cobra.Command {
 						}
 						if add {
 							currentBlock = int(processedBlock)
-							mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok")
+							mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok", noColor)
 						}
 					}
 				}
@@ -97,7 +97,7 @@ func Cmd_RotateBlockCCW90() *cobra.Command {
 				return fmt.Errorf("failed to write APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Rotation completed for block number %d", blockNumber), "ok")
+			mpagd.LogMessage("Cmd_RotateBlockCCW90", fmt.Sprintf("Rotation completed for block number %d", blockNumber), "ok", noColor)
 			return nil
 		},
 	}
@@ -133,7 +133,7 @@ func Cmd_RotateBlockCW90() *cobra.Command {
 				outFile = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "info")
+			mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Starting rotation for file: %s", inFile), "info", noColor)
 
 			apjFile := mpagd.NewAPJFile(inFile)
 			err = apjFile.ReadAPJ()
@@ -147,7 +147,7 @@ func Cmd_RotateBlockCW90() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Backup created: %s", inFile), "ok")
+				mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
 			}
 
 			// Rotate blocks
@@ -160,7 +160,7 @@ func Cmd_RotateBlockCW90() *cobra.Command {
 					}
 					if add {
 						currentBlock = int(processedBlock)
-						mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok")
+						mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok", noColor)
 					}
 				}
 			} else {
@@ -173,7 +173,7 @@ func Cmd_RotateBlockCW90() *cobra.Command {
 						}
 						if add {
 							currentBlock = int(processedBlock)
-							mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok")
+							mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("created new rotated block: %v", currentBlock), "ok", noColor)
 						}
 					}
 				}
@@ -185,7 +185,7 @@ func Cmd_RotateBlockCW90() *cobra.Command {
 				return fmt.Errorf("failed to write APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Rotation completed for block number %d", blockNumber), "ok")
+			mpagd.LogMessage("Cmd_RotateBlockCW90", fmt.Sprintf("Rotation completed for block number %d", blockNumber), "ok", noColor)
 			return nil
 		},
 	}
@@ -215,7 +215,7 @@ func Cmd_ImportBlocks() *cobra.Command {
 				outputFilePath = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info")
+			mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Starting import for file: %s", apjFilePath), "info", noColor)
 
 			// Open and read the APJ file
 			apj := mpagd.NewAPJFile(apjFilePath)
@@ -229,7 +229,7 @@ func Cmd_ImportBlocks() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Backup created: %s", outputFilePath), "ok")
+				mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Backup created: %s", outputFilePath), "ok", noColor)
 			}
 
 			// Import blocks from the AGD file
@@ -246,7 +246,7 @@ func Cmd_ImportBlocks() *cobra.Command {
 				return fmt.Errorf("failed to write updated APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Blocks imported successfully. Updated APJ file saved to %s", outputFilePath), "ok")
+			mpagd.LogMessage("Cmd_ImportBlocks", fmt.Sprintf("Blocks imported successfully. Updated APJ file saved to %s", outputFilePath), "ok", noColor)
 			return nil
 		},
 	}
@@ -304,16 +304,16 @@ func Cmd_RenderBlock() *cobra.Command {
 			if endBlock < 0 || endBlock > len(apjFile.Blocks) {
 				return fmt.Errorf("end block out of range: %d", endBlock)
 			}
-			mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Rendering blocks %d to %d", startBlock, endBlock-1), "info")
+			mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Rendering blocks %d to %d", startBlock, endBlock-1), "info", noColor)
 			var reorder []int
 			if reorderStr != "" {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
-				mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Reordering blocks: %v", reorder), "ok")
+				mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Reordering blocks: %v", reorder), "ok", noColor)
 			}
 			if err := apjFile.RenderBlockToTerminal(startBlock, endBlock, reorder); err != nil {
 				return fmt.Errorf("failed to render blocks: %w", err)
 			}
-			mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Blocks %d to %d successfully rendered", startBlock, endBlock-1), "ok")
+			mpagd.LogMessage("Cmd_RenderBlock", fmt.Sprintf("Blocks %d to %d successfully rendered", startBlock, endBlock-1), "ok", noColor)
 			return nil
 		},
 	}
@@ -326,7 +326,7 @@ func Cmd_RenderBlock() *cobra.Command {
 // Cmd_RenderBlocksToBitmap creates a command to render blocks to a bitmap file.
 func Cmd_RenderBlocksToBitmap() *cobra.Command {
 	var reorderStr string
-
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "render-bmp [project file] [[start block]] [[end block]] [output file]",
 		Short: "Render blocks to a bitmap file.",
@@ -374,32 +374,34 @@ func Cmd_RenderBlocksToBitmap() *cobra.Command {
 			if endIndex < 0 || endIndex > len(apjFile.Blocks) {
 				return fmt.Errorf("end blocks out of range: %d", endIndex)
 			}
-			mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Rendering blocks %d to %d to bitmap file: %s", startIndex, endIndex-1, outputFile), "info")
+			mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Rendering blocks %d to %d to bitmap file: %s", startIndex, endIndex-1, outputFile), "info", noColor)
 			//for i := startIndex; i < endIndex; i++ {
 			outputFileWithIndex := outputFile
 			//split reorder string by comma
 			var reorder []int
 			if reorderStr != "" {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
-				mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Reordering blocks: %v", reorder), "ok")
+				mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Reordering blocks: %v", reorder), "ok", noColor)
 			}
-			if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder); err != nil {
+			if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder, offset); err != nil {
 				return fmt.Errorf("failed to render blocks to bitmap: %w", err)
 			}
 			//}
 
-			mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("blocks %d to %d successfully rendered to %s", startIndex, endIndex-1, outputFile), "ok")
+			mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("blocks %d to %d successfully rendered to %s", startIndex, endIndex-1, outputFile), "ok", noColor)
 			return nil
 		},
 	}
 
 	// Define flags for the command
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 
 // Cmd_ReorderBlocks creates a command to reorder blocks in the MPAGD project.
 func Cmd_ReorderBlocks() *cobra.Command {
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "reorder [project file] [order] [[output file]]",
 		Short: "Reorder blocks in the MPAGD project.",
@@ -413,7 +415,7 @@ func Cmd_ReorderBlocks() *cobra.Command {
 				outFile = args[2]
 			}
 
-			mpagd.LogMessage("Cmd_ReorderBlocks", fmt.Sprintf("Starting reorder for file: %s", inFile), "info")
+			mpagd.LogMessage("Cmd_ReorderBlocks", fmt.Sprintf("Starting reorder for file: %s", inFile), "info", noColor)
 
 			apjFile := mpagd.NewAPJFile(inFile)
 			err := apjFile.ReadAPJ()
@@ -427,14 +429,14 @@ func Cmd_ReorderBlocks() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to create backup: %w", err)
 				}
-				mpagd.LogMessage("Cmd_ReorderBlocks", fmt.Sprintf("Backup created: %s", inFile), "ok")
+				mpagd.LogMessage("Cmd_ReorderBlocks", fmt.Sprintf("Backup created: %s", inFile), "ok", noColor)
 			}
 
 			// Convert the order string to a slice of integers
 			order := mpagd.CSVToIntSlice(orderStr)
 
 			// Reorder blocks
-			err = apjFile.ReorderBlocks(order)
+			err = apjFile.ReorderBlocks(order, offset)
 			if err != nil {
 				return fmt.Errorf("failed to reorder blocks: %w", err)
 			}
@@ -445,10 +447,11 @@ func Cmd_ReorderBlocks() *cobra.Command {
 				return fmt.Errorf("failed to write APJ file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_ReorderBlocks", "Reorder completed successfully", "ok")
+			mpagd.LogMessage("Cmd_ReorderBlocks", "Reorder completed successfully", "ok", noColor)
 			return nil
 		},
 	}
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 

@@ -33,14 +33,14 @@ func Cmd_Backup() *cobra.Command {
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", filePath)
 			}
-			mpagd.LogMessage("Cmd_Backup", fmt.Sprintf("Creating backup for file: %s", filePath), "info")
+			mpagd.LogMessage("Cmd_Backup", fmt.Sprintf("Creating backup for file: %s", filePath), "info", noColor)
 			// Assuming APJFile is a struct with a method BackupProjectFile
 			apj := mpagd.NewAPJFile(filePath)
 			err := apj.BackupProjectFile(code)
 			if err != nil {
 				return fmt.Errorf("error creating backup: %v", err)
 			}
-			mpagd.LogMessage("Cmd_Backup", fmt.Sprintf("Backup created successfully for file: %s", filePath), "ok")
+			mpagd.LogMessage("Cmd_Backup", fmt.Sprintf("Backup created successfully for file: %s", filePath), "ok", noColor)
 			return nil
 		},
 	}
@@ -63,11 +63,11 @@ func Cmd_Restore() *cobra.Command {
 			filePath := args[0]
 			// Check if the file exists
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
-				mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Project File %s does not exist", filePath), "warning")
+				mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Project File %s does not exist", filePath), "warning", noColor)
 				// Return an error if the file does not exist
 				//return fmt.Errorf("file %s does not exist", filePath)
 			}
-			mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Restoring last backup for file: %s", filePath), "info")
+			mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Restoring last backup for file: %s", filePath), "info", noColor)
 			// Assuming APJFile is a struct with a method RestoreLastBackup
 			//conver path to /
 
@@ -82,7 +82,7 @@ func Cmd_Restore() *cobra.Command {
 
 			}
 
-			mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Last backup restored successfully: %s", lastBackup), "ok")
+			mpagd.LogMessage("Cmd_Restore", fmt.Sprintf("Last backup restored successfully: %s", lastBackup), "ok", noColor)
 			return nil
 		},
 	}
@@ -106,7 +106,7 @@ func Cmd_PurgeBackup() *cobra.Command {
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", filePath)
 			}
-			mpagd.LogMessage("Cmd_PurgeBackup", fmt.Sprintf("Purging backup files for: %s", filePath), "info")
+			mpagd.LogMessage("Cmd_PurgeBackup", fmt.Sprintf("Purging backup files for: %s", filePath), "info", noColor)
 			// Assuming APJFile is a struct with a method RestoreLastBackup
 			filePath = strings.ReplaceAll(filePath, "\\", "/")
 			backupDir := path.Dir(filePath)
@@ -119,7 +119,7 @@ func Cmd_PurgeBackup() *cobra.Command {
 
 			}
 
-			mpagd.LogMessage("Cmd_PurgeBackup", "All backup files purged successfully.", "ok")
+			mpagd.LogMessage("Cmd_PurgeBackup", "All backup files purged successfully.", "ok", noColor)
 			return nil
 		},
 	}
@@ -141,7 +141,7 @@ func Cmd_ListBackups() *cobra.Command {
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", filePath)
 			}
-			mpagd.LogMessage("Cmd_ListBackups", fmt.Sprintf("Listing backup files for: %s", filePath), "info")
+			mpagd.LogMessage("Cmd_ListBackups", fmt.Sprintf("Listing backup files for: %s", filePath), "info", noColor)
 			// Assuming APJFile is a struct with a method ListBackupProjectFiles
 			filePath = strings.ReplaceAll(filePath, "\\", "/")
 			backupDir := path.Dir(filePath)
@@ -154,11 +154,11 @@ func Cmd_ListBackups() *cobra.Command {
 			}
 
 			if len(backupFiles) == 0 {
-				mpagd.LogMessage("Cmd_ListBackups", "No backup files found.", "warning")
+				mpagd.LogMessage("Cmd_ListBackups", "No backup files found.", "warning", noColor)
 				return nil
 			}
 
-			mpagd.LogMessage("Cmd_ListBackups", "Available backup files:", "ok")
+			mpagd.LogMessage("Cmd_ListBackups", "Available backup files:", "ok", noColor)
 			for _, file := range backupFiles {
 				fmt.Println(file)
 			}
@@ -181,12 +181,12 @@ func Cmd_AutoBackup() *cobra.Command {
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", filePath)
 			}
-			mpagd.LogMessage("Cmd_AutoBackup", fmt.Sprintf("Starting auto-backup for file: %s", filePath), "info")
-			mpagd.LogMessage("Cmd_AutoBackup", "Press ESC key to quit", "info")
+			mpagd.LogMessage("Cmd_AutoBackup", fmt.Sprintf("Starting auto-backup for file: %s", filePath), "info", noColor)
+			mpagd.LogMessage("Cmd_AutoBackup", "Press ESC key to quit", "info", noColor)
 			// Assuming APJFile is a struct with a method MonitorFileChanges
 			apj := mpagd.NewAPJFile(filePath)
 			apj.MonitorFileChanges(code)
-			mpagd.LogMessage("Cmd_AutoBackup", "Auto-backup started successfully.", "ok")
+			mpagd.LogMessage("Cmd_AutoBackup", "Auto-backup started successfully.", "ok", noColor)
 			return nil
 		},
 	}
@@ -204,7 +204,7 @@ func Cmd_SaveAsYAML() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectFile := args[0]
 			outputYAMLFile := args[1]
-			mpagd.LogMessage("Cmd_SaveAsYAML", fmt.Sprintf("Saving project as YAML file: %s", outputYAMLFile), "info")
+			mpagd.LogMessage("Cmd_SaveAsYAML", fmt.Sprintf("Saving project as YAML file: %s", outputYAMLFile), "info", noColor)
 			// Check if the project file exists
 			if _, err := os.Stat(projectFile); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", projectFile)
@@ -215,7 +215,7 @@ func Cmd_SaveAsYAML() *cobra.Command {
 				return fmt.Errorf("failed to save project as YAML: %v", err)
 			}
 
-			mpagd.LogMessage("Cmd_SaveAsYAML", fmt.Sprintf("Project saved successfully as YAML file: %s", outputYAMLFile), "ok")
+			mpagd.LogMessage("Cmd_SaveAsYAML", fmt.Sprintf("Project saved successfully as YAML file: %s", outputYAMLFile), "ok", noColor)
 			return nil
 		},
 	}
@@ -231,7 +231,7 @@ func Cmd_LoadYAML() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			yamlFile := args[0]
 			outputProjectFile := args[1]
-			mpagd.LogMessage("Cmd_LoadYAML", fmt.Sprintf("Loading project from YAML file: %s", yamlFile), "info")
+			mpagd.LogMessage("Cmd_LoadYAML", fmt.Sprintf("Loading project from YAML file: %s", yamlFile), "info", noColor)
 			// Check if the YAML file exists
 			if _, err := os.Stat(yamlFile); os.IsNotExist(err) {
 				return fmt.Errorf("file %s does not exist", yamlFile)
@@ -241,7 +241,7 @@ func Cmd_LoadYAML() *cobra.Command {
 			if err := apj.LoadYAML(yamlFile); err != nil {
 				return fmt.Errorf("failed to load project from YAML: %v", err)
 			}
-			mpagd.LogMessage("Cmd_LoadYAML", fmt.Sprintf("Project loaded successfully from YAML file: %s", yamlFile), "ok")
+			mpagd.LogMessage("Cmd_LoadYAML", fmt.Sprintf("Project loaded successfully from YAML file: %s", yamlFile), "ok", noColor)
 			return nil
 		},
 	}
@@ -262,12 +262,12 @@ func Cmd_ImportAGD() *cobra.Command {
 			if len(args) == 3 {
 				outputFile = args[2]
 			}
-			mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Importing AGD elements from %s to %s", agdFile, projectFile), "info")
+			mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Importing AGD elements from %s to %s", agdFile, projectFile), "info", noColor)
 			// Open and read the project file
 			apj := mpagd.NewAPJFile(projectFile)
 
 			if err := apj.ReadAPJ(); err != nil {
-				mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Project file %s does not exist", projectFile), "warning")
+				mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Project file %s does not exist", projectFile), "warning", noColor)
 				replace = true // Set replace to false if the project file does not exist
 			}
 
@@ -275,13 +275,13 @@ func Cmd_ImportAGD() *cobra.Command {
 			if outputFile == projectFile {
 				// Check if the file exists
 				if _, err := os.Stat(projectFile); os.IsNotExist(err) {
-					mpagd.LogMessage("Cmd_ImportAGD", "New Project skipping backup", "warning")
+					mpagd.LogMessage("Cmd_ImportAGD", "New Project skipping backup", "warning", noColor)
 				} else {
 					err := apj.BackupProjectFile(false)
 					if err != nil {
 						return fmt.Errorf("failed to create backup: %w", err)
 					}
-					mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Backup created: %s.bak", projectFile), "ok")
+					mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("Backup created: %s.bak", projectFile), "ok", noColor)
 				}
 			}
 
@@ -298,7 +298,7 @@ func Cmd_ImportAGD() *cobra.Command {
 				return fmt.Errorf("failed to write updated project file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("AGD elements imported successfully. Updated project file saved to %s", outputFile), "ok")
+			mpagd.LogMessage("Cmd_ImportAGD", fmt.Sprintf("AGD elements imported successfully. Updated project file saved to %s", outputFile), "ok", noColor)
 			return nil
 		},
 	}
@@ -323,24 +323,24 @@ func Cmd_ImportAGDSelective() *cobra.Command {
 			if len(args) == 3 {
 				outputFile = args[2]
 			}
-			mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Importing AGD elements from %s to %s", agdFile, projectFile), "info")
+			mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Importing AGD elements from %s to %s", agdFile, projectFile), "info", noColor)
 			// Open and read the project file
 			apj := mpagd.NewAPJFile(projectFile)
 			if err := apj.ReadAPJ(); err != nil {
-				mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Project file %s does not exist", projectFile), "warning")
+				mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Project file %s does not exist", projectFile), "warning", noColor)
 				replace = true // Set replace to false if the project file does not exist
 			}
 
 			// If the output file is the same as the input file, create a backup
 			if outputFile == projectFile {
 				if _, err := os.Stat(projectFile); os.IsNotExist(err) {
-					mpagd.LogMessage("Cmd_ImportAGDSelective", "New Project skipping backup", "warning")
+					mpagd.LogMessage("Cmd_ImportAGDSelective", "New Project skipping backup", "warning", noColor)
 				} else {
 					err := apj.BackupProjectFile(false)
 					if err != nil {
 						return fmt.Errorf("failed to create backup: %w", err)
 					}
-					mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Backup created: %s.bak", projectFile), "ok")
+					mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("Backup created: %s.bak", projectFile), "ok", noColor)
 				}
 			}
 
@@ -358,7 +358,7 @@ func Cmd_ImportAGDSelective() *cobra.Command {
 				return fmt.Errorf("failed to write updated project file: %w", err)
 			}
 
-			mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("AGD elements imported successfully. Updated project file saved to %s", outputFile), "ok")
+			mpagd.LogMessage("Cmd_ImportAGDSelective", fmt.Sprintf("AGD elements imported successfully. Updated project file saved to %s", outputFile), "ok", noColor)
 			return nil
 		},
 	}
@@ -385,20 +385,20 @@ func Cmd_ListTemplates() *cobra.Command {
 		Short: "List all available project templates.",
 		Long:  `Display a list of all available project templates.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			mpagd.LogMessage("Cmd_ListTemplates", "Listing available templates", "info")
+			mpagd.LogMessage("Cmd_ListTemplates", "Listing available templates", "info", noColor)
 			templates, err := mpagd.ListTemplates()
 			if err != nil {
 				return fmt.Errorf("failed to list templates: %v", err)
 			}
 			if len(templates) == 0 {
-				mpagd.LogMessage("Cmd_ListTemplates", "No Templates Available", "warning")
+				mpagd.LogMessage("Cmd_ListTemplates", "No Templates Available", "warning", noColor)
 				return nil
 			}
-			mpagd.LogMessage("Cmd_ListTemplates", "Available Templates:", "ok")
+			mpagd.LogMessage("Cmd_ListTemplates", "Available Templates:", "ok", noColor)
 			for _, template := range templates {
 				fmt.Printf("Name: %s, Description:%s, Type:%s \n", template.Name, template.Description, template.Type)
 			}
-			mpagd.LogMessage("Cmd_ListTemplates", "Templates listed successfully.", "ok")
+			mpagd.LogMessage("Cmd_ListTemplates", "Templates listed successfully.", "ok", noColor)
 			return nil
 		},
 	}
@@ -414,12 +414,12 @@ func Cmd_CreateProjectFromTemplate() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectFile := args[0]
 			templateName := args[1]
-			mpagd.LogMessage("Cmd_CreateProjectFromTemplate", fmt.Sprintf("Creating project from template '%s'", templateName), "info")
+			mpagd.LogMessage("Cmd_CreateProjectFromTemplate", fmt.Sprintf("Creating project from template '%s'", templateName), "info", noColor)
 			err := mpagd.CreateProjectFromTemplate(projectFile, templateName)
 			if err != nil {
 				return fmt.Errorf("failed to create project from template: %v", err)
 			}
-			mpagd.LogMessage("Cmd_CreateProjectFromTemplate", fmt.Sprintf("Project created successfully from template '%s'", templateName), "ok")
+			mpagd.LogMessage("Cmd_CreateProjectFromTemplate", fmt.Sprintf("Project created successfully from template '%s'", templateName), "ok", noColor)
 			return nil
 		},
 	}
@@ -439,15 +439,15 @@ func Cmd_ProjectStats() *cobra.Command {
 				return fmt.Errorf("file %s does not exist", projectFile)
 			}
 
-			mpagd.LogMessage("Cmd_ProjectStats", fmt.Sprintf("Gathering stats for project file: %s", projectFile), "info")
+			mpagd.LogMessage("Cmd_ProjectStats", fmt.Sprintf("Gathering stats for project file: %s", projectFile), "info", noColor)
 			apj := mpagd.NewAPJFile(projectFile)
 			if err := apj.ReadAPJ(); err != nil {
 				return fmt.Errorf("failed to read project file: %v", err)
 			}
 
-			mpagd.LogMessage("Cmd_ProjectStats", "Project Statistics:", "info")
+			mpagd.LogMessage("Cmd_ProjectStats", "Project Statistics:", "info", noColor)
 			apj.DisplayStats() // Display the statistics in a user-friendly format
-			mpagd.LogMessage("Cmd_ProjectStats", "Project stats displayed successfully.", "ok")
+			mpagd.LogMessage("Cmd_ProjectStats", "Project stats displayed successfully.", "ok", noColor)
 			return nil
 		},
 	}
