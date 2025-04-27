@@ -445,7 +445,6 @@ func Cmd_ProjectStats() *cobra.Command {
 				return fmt.Errorf("failed to read project file: %v", err)
 			}
 
-			apj.DisplayStats() // Assuming GetStats() returns a struct or map with project stats
 			mpagd.LogMessage("Cmd_ProjectStats", "Project Statistics:", "info")
 			apj.DisplayStats() // Display the statistics in a user-friendly format
 			mpagd.LogMessage("Cmd_ProjectStats", "Project stats displayed successfully.", "ok")
