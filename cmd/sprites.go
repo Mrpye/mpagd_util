@@ -233,6 +233,7 @@ func Cmd_RotateSpritesCW90() *cobra.Command {
 func Cmd_RenderSprite() *cobra.Command {
 	var frame uint8
 	var reorderStr string
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "render [project file]  [[start block]] [[end block]]",
 		Short: "Render a sprite to the terminal.",
@@ -281,7 +282,7 @@ func Cmd_RenderSprite() *cobra.Command {
 			if reorderStr != "" {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
 			}
-			if err := apjFile.RenderSpriteToTerminal(uint8(startIndex), uint8(endIndex), reorder); err != nil {
+			if err := apjFile.RenderSpriteToTerminal(uint8(startIndex), uint8(endIndex), reorder, offset); err != nil {
 				return fmt.Errorf("failed to render sprite: %w", err)
 			}
 
@@ -290,12 +291,14 @@ func Cmd_RenderSprite() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
 	cmd.Flags().Uint8VarP(&frame, "frame", "f", 0, "Sprite frame to render")
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 
 func Cmd_RenderSpriteToBitmap() *cobra.Command {
 	var frame uint8
 	var reorderStr string
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "render-bmp [project file] [[start block]] [[end block]] [output file]",
 		Short: "Render sprites to a bitmap file.",
@@ -350,7 +353,7 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 			if reorderStr != "" {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
 			}
-			if err := apjFile.RenderSpriteToBitmap(uint8(startIndex), uint8(endIndex), outputFile, reorder); err != nil {
+			if err := apjFile.RenderSpriteToBitmap(uint8(startIndex), uint8(endIndex), outputFile, reorder, offset); err != nil {
 				return fmt.Errorf("failed to render sprite to bitmap: %w", err)
 			}
 			//}
@@ -361,6 +364,7 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
 	cmd.Flags().Uint8VarP(&frame, "frame", "f", 0, "Sprite frame to render")
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 

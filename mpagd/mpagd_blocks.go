@@ -262,7 +262,7 @@ func (apj *APJFile) RenderBlockToTerminal(start, end int, reorder []int) error {
 	var data []Block
 	if len(reorder) > 0 {
 		// Reorder the blocks based on the provided order
-		data, err = apj.GetReorderedBlocks(reorder)
+		data, err = apj.GetReorderedBlocks(reorder, 0)
 		if err != nil {
 			return fmt.Errorf("failed to reorder blocks: %s", err)
 		}
@@ -301,7 +301,7 @@ func (apj *APJFile) RenderBlockToTerminal(start, end int, reorder []int) error {
 }
 
 // RenderBlockToBitmap renders blocks to a bitmap file.
-func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath string, reorder []int) error {
+func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath string, reorder []int, offset int) error {
 	// Validate sprite indexes
 	if startIndex >= uint8(len(apj.Blocks)) || endIndex > uint8(len(apj.Blocks)) || startIndex >= endIndex {
 		return fmt.Errorf("blocks index range out of bounds: %d-%d", startIndex, endIndex)
@@ -318,7 +318,7 @@ func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath str
 	var data []Block
 	if len(reorder) > 0 {
 		// Reorder the blocks based on the provided order
-		data, err = apj.GetReorderedBlocks(reorder)
+		data, err = apj.GetReorderedBlocks(reorder, offset)
 		if err != nil {
 			return fmt.Errorf("failed to reorder blocks: %s", err)
 		}
@@ -368,8 +368,8 @@ func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath str
 }
 
 // ReorderBlocks reorders the blocks based on the provided order.
-func (apj *APJFile) ReorderBlocks(order []int) error {
-	newBlocks, err := apj.GetReorderedBlocks(order)
+func (apj *APJFile) ReorderBlocks(order []int, offset int) error {
+	newBlocks, err := apj.GetReorderedBlocks(order, offset)
 	if err != nil {
 		return fmt.Errorf("failed to reorder blocks: %s", err)
 	}
@@ -413,11 +413,11 @@ func (apj *APJFile) ReorderBlocks(order []int) error {
 }
 
 // GetReorderedBlocks returns a new slice of blocks reordered based on the provided order.
-func (apj *APJFile) GetReorderedBlocks(order []int) ([]Block, error) {
-	if len(order) > len(apj.Blocks) {
+func (apj *APJFile) GetReorderedBlocks(order []int, offset int) ([]Block, error) {
+	if len(order)+offset > len(apj.Blocks) {
 		return nil, fmt.Errorf("order list exceeds the number of blocks")
 	}
-	//update the id of the blocks in the new order
+	// Update the ID of the blocks in the new order
 	for i := range apj.Blocks {
 		apj.Blocks[i].ID = uint8(i)
 	}
@@ -425,8 +425,17 @@ func (apj *APJFile) GetReorderedBlocks(order []int) ([]Block, error) {
 	reordered := make(map[int]bool)
 	newBlocks := make([]Block, 0, len(apj.Blocks))
 
-	// Add blocks in the specified order
+	for i, block := range apj.Blocks {
+		if offset <= i {
+			break // Skip blocks before the offset
+		}
+		newBlocks = append(newBlocks, block)
+		reordered[i] = true
+	}
+
+	// Add blocks in the specified order, applying the offset
 	for _, index := range order {
+		index += offset
 		if index < 0 || index >= len(apj.Blocks) {
 			return nil, fmt.Errorf("block index out of range: %d", index)
 		}
@@ -441,7 +450,5 @@ func (apj *APJFile) GetReorderedBlocks(order []int) ([]Block, error) {
 		}
 	}
 
-	//apj.Blocks = newBlocks
-	//apj.NrOfBlocks = uint8(len(apj.Blocks))
 	return newBlocks, nil
 }

@@ -326,7 +326,7 @@ func Cmd_RenderBlock() *cobra.Command {
 // Cmd_RenderBlocksToBitmap creates a command to render blocks to a bitmap file.
 func Cmd_RenderBlocksToBitmap() *cobra.Command {
 	var reorderStr string
-
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "render-bmp [project file] [[start block]] [[end block]] [output file]",
 		Short: "Render blocks to a bitmap file.",
@@ -383,7 +383,7 @@ func Cmd_RenderBlocksToBitmap() *cobra.Command {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
 				mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Reordering blocks: %v", reorder), "ok")
 			}
-			if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder); err != nil {
+			if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder, offset); err != nil {
 				return fmt.Errorf("failed to render blocks to bitmap: %w", err)
 			}
 			//}
@@ -395,11 +395,13 @@ func Cmd_RenderBlocksToBitmap() *cobra.Command {
 
 	// Define flags for the command
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 
 // Cmd_ReorderBlocks creates a command to reorder blocks in the MPAGD project.
 func Cmd_ReorderBlocks() *cobra.Command {
+	var offset int
 	var cmd = &cobra.Command{
 		Use:   "reorder [project file] [order] [[output file]]",
 		Short: "Reorder blocks in the MPAGD project.",
@@ -434,7 +436,7 @@ func Cmd_ReorderBlocks() *cobra.Command {
 			order := mpagd.CSVToIntSlice(orderStr)
 
 			// Reorder blocks
-			err = apjFile.ReorderBlocks(order)
+			err = apjFile.ReorderBlocks(order, offset)
 			if err != nil {
 				return fmt.Errorf("failed to reorder blocks: %w", err)
 			}
@@ -449,6 +451,7 @@ func Cmd_ReorderBlocks() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }
 

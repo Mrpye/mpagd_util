@@ -229,6 +229,7 @@ func (apj *APJFile) ImportSprites(lines []string) error {
 
 	return nil
 }
+
 func (apj *APJFile) CalcOffset() {
 	offset := uint8(0)
 	for i, sprite := range apj.Sprites {
@@ -473,8 +474,8 @@ func (apj *APJFile) SpriteTo2DArray(data []uint8) ([][]uint8, error) {
 
 }
 
-func (apj *APJFile) GetReorderedSprites(order []int) ([]Sprite, error) {
-	if len(order) > len(apj.Sprites) {
+func (apj *APJFile) GetReorderedSprites(order []int, offset int) ([]Sprite, error) {
+	if len(order)+offset > len(apj.Sprites) {
 		return nil, fmt.Errorf("order list exceeds the number of sprites")
 	}
 
@@ -482,8 +483,17 @@ func (apj *APJFile) GetReorderedSprites(order []int) ([]Sprite, error) {
 	reordered := make(map[int]bool)
 	newSprites := make([]Sprite, 0, len(apj.Sprites))
 
+	for i := range apj.Sprites {
+		if offset <= i {
+			break // Skip blocks before the offset
+		}
+		newSprites = append(newSprites, apj.Sprites[i])
+		reordered[i] = true
+	}
+
 	// Add sprites in the specified order
 	for _, index := range order {
+		index += offset
 		if index < 0 || index >= len(apj.Sprites) {
 			return nil, fmt.Errorf("sprite index out of range: %d", index)
 		}
@@ -502,7 +512,7 @@ func (apj *APJFile) GetReorderedSprites(order []int) ([]Sprite, error) {
 }
 
 // RenderSpriteToBitmap renders a range of sprites to a bitmap file
-func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath string, reorder []int) error {
+func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath string, reorder []int, offset int) error {
 	// Validate sprite indexes
 	if startIndex >= uint8(len(apj.Sprites)) || endIndex > uint8(len(apj.Sprites)) || startIndex >= endIndex {
 		return fmt.Errorf("sprite index range out of bounds: %d-%d", startIndex, endIndex)
@@ -519,7 +529,7 @@ func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath st
 	var data []Sprite
 	if len(reorder) > 0 {
 		// Reorder the blocks based on the provided order
-		data, err = apj.GetReorderedSprites(reorder)
+		data, err = apj.GetReorderedSprites(reorder, offset)
 		if err != nil {
 			return fmt.Errorf("failed to reorder blocks: %s", err)
 		}
@@ -564,7 +574,7 @@ func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath st
 
 	return nil
 }
-func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder []int) error {
+func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder []int, offset int) error {
 	if startIndex >= uint8(len(apj.Sprites)) || endIndex > uint8(len(apj.Sprites)) {
 		return fmt.Errorf("sprite index out of range: %d", startIndex)
 	}
@@ -580,7 +590,7 @@ func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder [
 	var data []Sprite
 	if len(reorder) > 0 {
 		// Reorder the blocks based on the provided order
-		data, err = apj.GetReorderedSprites(reorder)
+		data, err = apj.GetReorderedSprites(reorder, offset)
 		if err != nil {
 			return fmt.Errorf("failed to reorder blocks: %s", err)
 		}
@@ -614,4 +624,21 @@ func (apj *APJFile) RenderSpriteToTerminal(startIndex, endIndex uint8, reorder [
 	//tg.PrintStr(0, 0, "aa") // draw one pixel with color from 10,10
 	return nil
 
+}
+
+func (apj *APJFile) ReorderSprites(order []int, offset int) error {
+	newSprites, err := apj.GetReorderedSprites(order, offset)
+	if err != nil {
+		return fmt.Errorf("failed to reorder sprites: %s", err)
+	}
+
+	for i, sprite := range newSprites {
+		sprite.SpriteID = uint8(i)
+		sprite.OffSet = uint8(i)      // Update the offset if needed
+		sprite.Frames = sprite.Frames // Update the frames if needed
+	}
+
+	apj.Sprites = newSprites
+	apj.NrOfSprites = uint8(len(apj.Sprites))
+	return nil
 }
