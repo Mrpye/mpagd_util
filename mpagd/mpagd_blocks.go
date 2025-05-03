@@ -16,6 +16,7 @@ import (
 // Block represents a game block with various platform-specific data.
 type Block struct {
 	ID         uint8   // Unique identifier for the block
+	Type       uint8   // Unique identifier for the block
 	Spectrum   []uint8 // Spectrum platform data
 	Timex      []uint8 // Timex platform data
 	CPC        []uint8 // CPC platform data
@@ -25,9 +26,10 @@ type Block struct {
 }
 
 // createBlock initializes a new Block with the given ID and allocates memory for its platform-specific data.
-func (apj *APJFile) createBlock(blockID uint8) Block {
+func (apj *APJFile) createBlock(id, blockType uint8) Block {
 	return Block{
-		ID:         blockID,
+		ID:         id,
+		Type:       blockType,
 		Spectrum:   make([]uint8, 9),
 		Timex:      make([]uint8, 16),
 		CPC:        make([]uint8, 24),
@@ -51,7 +53,7 @@ func (apj *APJFile) BlockDefault() {
 		apj.Blocks = make([]Block, 0)
 		for J := 0; J < 1; J++ {
 			for i := 0; i < 1; i++ {
-				apj.Blocks = append(apj.Blocks, apj.createBlock(uint8(i)))
+				apj.Blocks = append(apj.Blocks, apj.createBlock(uint8(i), 0))
 			}
 			// Set default values for each block type
 			for i := range apj.Blocks {
@@ -83,7 +85,7 @@ func (apj *APJFile) readBlocks(f io.Reader) error {
 		if err := binary.Read(f, binary.LittleEndian, &blockType); err != nil {
 			return err
 		}
-		blocks[i] = apj.createBlock(blockType)
+		blocks[i] = apj.createBlock(uint8(i), blockType)
 	}
 	// Read block image data for each platform
 	for i := range blocks {
@@ -118,7 +120,7 @@ func (apj *APJFile) writeBlocks(f io.Writer) error {
 		return err
 	}
 	for _, block := range apj.Blocks {
-		if err := binary.Write(f, binary.LittleEndian, block.ID); err != nil {
+		if err := binary.Write(f, binary.LittleEndian, block.Type); err != nil {
 			return err
 		}
 	}
@@ -147,13 +149,14 @@ func (apj *APJFile) ImportBlocks(lines []string) error {
 	}
 	blockPattern := regexp.MustCompile(`^DEFINEBLOCK\s+(\w+)`)
 	if match := blockPattern.FindStringSubmatch(lines[0]); match != nil {
-		blockID := GetBlockIDByType(match[1])
-		currentBlock := apj.createBlock(blockID)
+		blockType := GetBlockIDByType(match[1])
+		currentBlock := apj.createBlock(uint8(len(apj.Blocks)), blockType)
 		blockValues := strings.Fields(lines[1])
 		imageData := make([]uint8, len(blockValues))
 		for i, value := range blockValues {
 			imageData[i] = strUint8(value)
 		}
+
 		currentBlock.Spectrum = imageData[:9] // Example: Spectrum uses 9 bytes
 		apj.Blocks = append(apj.Blocks, currentBlock)
 		apj.NrOfBlocks = uint8(len(apj.Blocks))
@@ -169,7 +172,7 @@ func (apj *APJFile) RotateBlock(blockIndex uint8, ccw bool, retain bool) (uint8,
 	}
 	var block Block
 	if retain {
-		block = apj.createBlock(uint8(len(apj.Blocks)))
+		block = apj.createBlock(uint8(len(apj.Blocks)), apj.Blocks[blockIndex].Type)
 	} else {
 		block = apj.Blocks[blockIndex]
 	}
