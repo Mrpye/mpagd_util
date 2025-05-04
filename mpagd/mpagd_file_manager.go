@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -287,15 +289,22 @@ func (apj *APJFile) MonitorFileChanges(code bool) {
 	}
 	lastModified := fileInfo.ModTime()
 
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 	//Check for ESC key pressed
 	go func() {
-		for {
-			if IsESCKeyPressed() {
-				LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info", apj.noColor)
-				os.Exit(0)
-			}
-		}
+		<-done
+		LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info", apj.noColor)
+		os.Exit(0)
 	}()
+	// go func() {
+	// 	for {
+	// 		if IsESCKeyPressed() {
+	// 			LogMessage("MonitorFileChanges", "Exiting file monitoring loop", "info", apj.noColor)
+	// 			os.Exit(0)
+	// 		}
+	// 	}
+	// }()
 
 	// Monitor for changes in a loop
 	for {

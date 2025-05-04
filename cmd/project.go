@@ -182,7 +182,7 @@ func Cmd_AutoBackup() *cobra.Command {
 				return fmt.Errorf("file %s does not exist", filePath)
 			}
 			mpagd.LogMessage("Cmd_AutoBackup", fmt.Sprintf("Starting auto-backup for file: %s", filePath), "info", noColor)
-			mpagd.LogMessage("Cmd_AutoBackup", "Press ESC key to quit", "info", noColor)
+			mpagd.LogMessage("Cmd_AutoBackup", "Press Ctrl+C to exit", "info", noColor)
 			// Assuming APJFile is a struct with a method MonitorFileChanges
 			apj := mpagd.NewAPJFile(filePath)
 			apj.MonitorFileChanges(code)
