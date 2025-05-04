@@ -149,7 +149,7 @@ func (apj *APJFile) ImportBlocks(lines []string) error {
 	}
 	blockPattern := regexp.MustCompile(`^DEFINEBLOCK\s+(\w+)`)
 	if match := blockPattern.FindStringSubmatch(lines[0]); match != nil {
-		blockType := GetBlockIDByType(match[1])
+		blockType := GetBlockTypeIDByType(match[1])
 		currentBlock := apj.createBlock(uint8(len(apj.Blocks)), blockType)
 		blockValues := strings.Fields(lines[1])
 		imageData := make([]uint8, len(blockValues))

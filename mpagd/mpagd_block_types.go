@@ -24,7 +24,7 @@ var BlockTypeToId = map[string]uint8{
 
 // GetBlockTypeByID returns the block type name for a given block ID.
 // If the ID does not exist, it returns "UNKNOWN".
-func GetBlockTypeByID(id uint8) string {
+func GetBlockTypeByTypeID(id uint8) string {
 	if blockType, exists := IdToBlockType[id]; exists {
 		return blockType
 	}
@@ -33,7 +33,7 @@ func GetBlockTypeByID(id uint8) string {
 
 // GetBlockIDByType returns the block ID for a given block type name.
 // If the block type does not exist, it returns 0 as the default value.
-func GetBlockIDByType(blockType string) uint8 {
+func GetBlockTypeIDByType(blockType string) uint8 {
 	if id, exists := BlockTypeToId[blockType]; exists {
 		return id
 	}

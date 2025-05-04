@@ -12,14 +12,14 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-var appVersion = "0.1.5"
+var appVersion = "0.1.6"
 var noColor = false
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "mpagd_util",
-	Short: `MPAGD Utility CLI version` + appVersion,
-	Long:  `A command line interface for MPAGD utility functions.`,
+	Short: `MPAGD Utility CLI Version:` + appVersion,
+	Long:  `A command line interface for MPAGD utility functions. Version:` + appVersion,
 }
 
 func SetNoColor(no_color bool) {
@@ -55,6 +55,20 @@ func GenerateDoc() *cobra.Command {
 	return cmd
 }
 
+func Version() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "version",
+		Short: "Display version information",
+		Long:  `This command displays the version number and basic information about the MPAGD Utility CLI.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Display version and app information
+			fmt.Printf("MPAGD Utility CLI\nVersion: %s\nDescription: A command line interface for MPAGD utility functions.\n", appVersion)
+			return nil
+		},
+	}
+	return cmd
+}
+
 func Execute() {
 	err := RootCmd.Execute()
 	if err != nil {
@@ -67,5 +81,6 @@ func init() {
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	RootCmd.PersistentFlags().BoolP("help", "", false, "help for this command")
 	RootCmd.AddCommand(GenerateDoc())
+	RootCmd.AddCommand(Version())
 
 }
