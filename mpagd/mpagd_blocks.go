@@ -319,7 +319,7 @@ func (apj *APJFile) RenderBlockToSeperateBitmap(startIndex, endIndex uint8, Imag
 	// Loop through the specified range of blocks
 	for i := startIndex; i < endIndex; i++ {
 		blockFilePath := fmt.Sprintf("%s/block_%d.png", ImagePath, i)
-		if err := apj.RenderBlockToBitmap(i, i, blockFilePath, reorder, offset); err != nil {
+		if err := apj.RenderBlockToBitmap(i, i+1, blockFilePath, reorder, offset); err != nil {
 			return fmt.Errorf("failed to render block %d to bitmap: %s", i,
 				err)
 		}
@@ -336,6 +336,9 @@ func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath str
 	// Calculate the number of sprites and layout
 	size := 8
 	columns := int(8)
+	if endIndex-startIndex < uint8(columns) {
+		columns = int(endIndex - startIndex)
+	}
 	imageWidth, imageHeight := CalcImageSize(startIndex, endIndex, columns, size)
 	var err error
 	img := image.NewRGBA(image.Rect(0, 0, int(imageWidth), int(imageHeight)))

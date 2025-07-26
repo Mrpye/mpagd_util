@@ -172,8 +172,16 @@ func CalcImageSize(startIndex, endIndex uint8, columns, size int) (int, int) {
 	spriteCount := int(endIndex - startIndex)
 	spriteWidth, spriteHeight := size, size
 	rows := (spriteCount + columns - 1) / columns
-	imageWidth := columns*spriteWidth + (size * 1)
-	imageHeight := rows*spriteHeight + (rows * 1)
+	imageWidth := 0
+	imageHeight := 0
+	if columns == 1 {
+		imageWidth = columns * spriteWidth
+		imageHeight = rows * spriteHeight
+	} else {
+		imageWidth = columns*spriteWidth + (size * 1)
+		imageHeight = rows*spriteHeight + (rows * 1)
+	}
+
 	return imageWidth, imageHeight
 }
 

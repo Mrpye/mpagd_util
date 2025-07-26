@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Mrpye/mpagd_util/mpagd"
@@ -453,6 +454,49 @@ func Cmd_ProjectStats() *cobra.Command {
 	}
 }
 
+// Cmd_CreateReadme creates a command to generate a README file for the project.
+func Cmd_CreateReadme() *cobra.Command {
+	return &cobra.Command{
+		Use:   "create-readme [project file] [output readme file]",
+		Short: "Generate a README file for the project.",
+		Args:  cobra.ExactArgs(1),
+		Long:  `Build a Markdown README file for the project using its data.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			projectFile := args[0]
+			outputReadme := ""
+			if len(args) > 1 {
+				outputReadme = args[1]
+			}
+			if outputReadme == "" {
+				outputReadme = filepath.Join(filepath.Dir(projectFile), "docs", "README.md")
+			}
+			// Check if the project file exists
+			if _, err := os.Stat(projectFile); os.IsNotExist(err) {
+				return fmt.Errorf("file %s does not exist", projectFile)
+			}
+			mpagd.LogMessage("Cmd_CreateReadme", fmt.Sprintf("Generating README for project file: %s", projectFile), "info", noColor)
+			apj := mpagd.NewAPJFile(projectFile)
+			if err := apj.ReadAPJ(); err != nil {
+				return fmt.Errorf("failed to read project file: %v", err)
+			}
+			// Build project info JSON
+
+			// Use a version of BuildProjectInfoJson that returns the JSON string
+			jsonStr, err := apj.BuildProjectInfoJson()
+			if err != nil {
+				return fmt.Errorf("failed to build project info JSON: %v", err)
+			}
+			err = mpagd.BuildProjectReadme(outputReadme, []byte(jsonStr))
+			if err != nil {
+				return fmt.Errorf("failed to build README: %v", err)
+			}
+
+			mpagd.LogMessage("Cmd_CreateReadme", fmt.Sprintf("README file created: %s", outputReadme), "ok", noColor)
+			return nil
+		},
+	}
+}
+
 // Initialize all commands and add them to the root command.
 func init() {
 	RootCmd.AddCommand(projectCmd)
@@ -468,4 +512,5 @@ func init() {
 	projectCmd.AddCommand(Cmd_ListTemplates())
 	projectCmd.AddCommand(Cmd_CreateProjectFromTemplate())
 	projectCmd.AddCommand(Cmd_ProjectStats())
+	projectCmd.AddCommand(Cmd_CreateReadme())
 }

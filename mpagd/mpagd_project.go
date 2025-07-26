@@ -1,6 +1,7 @@
 package mpagd
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -147,10 +148,16 @@ type ScreenDoc struct {
 	Info  []ScreenDocInfo `json:"info"` // List of screen documentation info
 }
 
+type BlockTypesDocInfo struct {
+	Type  string `json:"type"`
+	ID    uint8  `json:"id"`
+	Count int    `json:"count"` // Count of blocks of this type
+}
+
 type ScreenDocInfo struct {
 	ID          uint8                         `json:"id"`
 	Description string                        `json:"description"`
-	BlockTypes  map[string]uint8              `json:"block_types"`
+	BlockTypes  map[uint8]BlockTypesDocInfo   `json:"block_types"`
 	Sprites     map[uint8]ScreenSpriteDocInfo `json:"sprite_info"`
 }
 
@@ -192,6 +199,8 @@ type SpriteType struct {
 	ImageDescriptions []SpriteImageDesc `json:"image_descriptions"` // List of images and their frames
 }
 type ProjectInfo struct {
+	FilePath   string       `json:"file_path"` // Path to the project fil
+	Name       string       `json:"name"`      // Name of the project
 	Blocks     BlocksDoc    `json:"blocks"`
 	Sprites    SpriteDoc    `json:"sprites"`
 	Screens    ScreenDoc    `json:"screens"`
@@ -212,6 +221,13 @@ func (apj *APJFile) BuildProjectInfoJson() (string, error) {
 		return "", errors.New("project file path is empty, cannot build project info")
 	}
 
+	name := filepath.Base(apj.FilePath)
+	if name == "" {
+		return "", errors.New("project file name is empty, cannot build project info")
+	}
+	// remove the extension from the name
+	name = strings.TrimSuffix(name, filepath.Ext(name))
+
 	projectInfo := ProjectInfo{
 		Blocks: BlocksDoc{
 			Count: len(apj.Blocks),
@@ -230,6 +246,8 @@ func (apj *APJFile) BuildProjectInfoJson() (string, error) {
 		Fonts:      len(apj.Fonts),
 		Variables:  ExtractVariablesFromCodeFiles(directoryPath),
 		SpriteType: make([]SpriteType, 0),
+		Name:       name,
+		FilePath:   apj.FilePath,
 	}
 
 	// Blocks info
@@ -266,15 +284,26 @@ func (apj *APJFile) BuildProjectInfoJson() (string, error) {
 
 	// Screens info
 	for _, screen := range apj.Screens {
-		blockTypes := make(map[string]uint8)
+		blockTypes := make(map[uint8]BlockTypesDocInfo)
 		spriteTypes := make(map[uint8]ScreenSpriteDocInfo)
 
 		// Collect block types
 		for _, row := range screen.ScreenData {
 			for _, blockID := range row {
 				blockType := GetBlockTypeByTypeID(apj.Blocks[blockID].Type)
-				if _, exists := blockTypes[blockType]; !exists {
-					blockTypes[blockType] = blockID
+				if _, exists := blockTypes[blockID]; !exists {
+					blockTypesDo := BlockTypesDocInfo{
+						ID:   blockID, // I
+						Type: blockType,
+						// D is not available here, set to 0 or update if needed
+						Count: 1,
+					}
+					blockTypes[blockID] = blockTypesDo
+				} else {
+					bt := blockTypes[blockID]
+					bt.Count++
+					bt.Type = blockType
+					blockTypes[blockID] = bt
 				}
 			}
 		}
@@ -315,6 +344,39 @@ func (apj *APJFile) BuildProjectInfoJson() (string, error) {
 	jsonData, err := json.MarshalIndent(projectInfo, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal project info: %w", err)
+	}
+
+	// save the images for sprites and blocks
+	if len(apj.Blocks) > 0 {
+		blockDir := filepath.Join(directoryPath, "docs", "images", "blocks")
+		err := apj.RenderBlockToSeperateBitmap(0, uint8(len(apj.Blocks)), blockDir, nil, 0)
+		if err != nil {
+			return "", fmt.Errorf("failed to render blocks: %w", err)
+		}
+
+	}
+	if len(apj.Sprites) > 0 {
+		spriteDir := filepath.Join(directoryPath, "docs", "images", "sprites")
+		err := apj.RenderSpriteToSeperateBitmap(0, uint8(len(apj.Sprites)), spriteDir, nil, 0)
+		if err != nil {
+			return "", fmt.Errorf("failed to render sprites: %w", err)
+		}
+
+	}
+	if len(apj.Screens) > 0 {
+		screenDir := filepath.Join(directoryPath, "docs", "images", "screens")
+		err := os.MkdirAll(screenDir, os.ModePerm)
+		if err != nil {
+			return "", fmt.Errorf("failed to create screen directory: %w", err)
+		}
+		for _, st := range apj.Screens {
+			screenBMP := filepath.Join(screenDir, fmt.Sprintf("screen_%d.png", st.ScreenID))
+			err := apj.RenderScreenToBitmap(st.ScreenID, screenBMP)
+			if err != nil {
+				return "", fmt.Errorf("failed to render screens: %w", err)
+			}
+		}
+
 	}
 	return string(jsonData), nil
 }
@@ -540,4 +602,94 @@ func ParseSpriteTypeFiles(codeDir string) ([]SpriteType, error) {
 		})
 	}
 	return spriteTypes, nil
+}
+
+// BuildProjectReadme generates a Markdown README file from project info JSON data.
+func BuildProjectReadme(fileName string, projectInfoJson []byte) error {
+	var data ProjectInfo
+	if err := json.Unmarshal(projectInfoJson, &data); err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("# Project %s README\n\n", data.Name))
+	buf.WriteString("## Overview\n\n")
+	buf.WriteString(fmt.Sprintf("Project File Path: %s\n", data.FilePath))
+	buf.WriteString("\n---\n\n")
+	buf.WriteString("Number of elements in the project:\n")
+	buf.WriteString(fmt.Sprintf("- **Blocks:** %d\n", data.Blocks.Count))
+	buf.WriteString(fmt.Sprintf("- **Sprites:** %d\n", data.Sprites.Count))
+	buf.WriteString(fmt.Sprintf("- **Screens:** %d\n", data.Screens.Count))
+	buf.WriteString(fmt.Sprintf("- **Objects:** %d\n", data.Objects))
+	buf.WriteString(fmt.Sprintf("- **Maps:** %d\n", data.Maps))
+	buf.WriteString(fmt.Sprintf("- **Fonts:** %d\n", data.Fonts))
+	buf.WriteString("\n---\n\n")
+
+	buf.WriteString("## Block Types\n\n")
+	buf.WriteString("### Block Type Count\n\n")
+	blockTypeCount := make(map[string]int)
+	for _, b := range data.Blocks.Info {
+		blockTypeCount[b.Type]++
+	}
+	for t, c := range blockTypeCount {
+		buf.WriteString(fmt.Sprintf("- %s: %d\n", t, c))
+	}
+	buf.WriteString("\n---\n\n")
+
+	buf.WriteString("## Sprite Types\n\n")
+	for _, st := range data.SpriteType {
+		buf.WriteString(fmt.Sprintf("### %s\n", st.EventType))
+		buf.WriteString(fmt.Sprintf("- Description: %s\n", st.EventDescription))
+		if len(st.ImageDescriptions) > 0 {
+			buf.WriteString("#### Images:\n")
+			for _, img := range st.ImageDescriptions {
+				buf.WriteString(fmt.Sprintf("- **Image %d:** %s ![](images/sprites/sprite_%d.png)\n", img.ImageID, img.ImageName, img.ImageID))
+				for _, frame := range img.FrameDescs {
+					buf.WriteString(fmt.Sprintf("  - Frame %s: %s\n", frame.FrameRange, frame.Description))
+				}
+			}
+		}
+		buf.WriteString("\n")
+	}
+	buf.WriteString("---\n\n")
+
+	buf.WriteString("## Variables\n\n")
+	for _, v := range data.Variables {
+		buf.WriteString(fmt.Sprintf("- **%s** (%s): %s\n", v.Variable, v.Scope, v.Description))
+		if len(v.Locations) > 0 {
+			buf.WriteString("  - Used in:\n")
+			for _, loc := range v.Locations {
+				buf.WriteString(fmt.Sprintf("    - %s\n", loc))
+			}
+		}
+	}
+	buf.WriteString("\n---\n\n")
+
+	buf.WriteString("## Screens\n\n")
+	for _, s := range data.Screens.Info {
+
+		buf.WriteString(fmt.Sprintf("### Screen %d\n", s.ID))
+		if s.Description != "" {
+			buf.WriteString(fmt.Sprintf("- Description: %s\n", s.Description))
+		}
+		buf.WriteString(fmt.Sprintf("![](images/screens/screen_%d.png)\n", s.ID))
+		buf.WriteString("- Block Types:\n")
+		for _, id := range s.BlockTypes {
+
+			buf.WriteString(fmt.Sprintf("  - %s (ID: %d) (Count: %d) ![](images/blocks/block_%d.png)\n", id.Type, id.ID, id.Count, id.ID))
+		}
+		if len(s.Sprites) > 0 {
+			buf.WriteString("- Sprites:\n")
+			for _, si := range s.Sprites {
+				typeDesc := data.SpriteType[si.Type].EventDescription
+				//add image description if available
+				buf.WriteString(fmt.Sprintf("  - Type %d (%s), Image %d, Count %d, Pos (%d,%d) ![](images/sprites/sprite_%d.png)\n", si.Type, typeDesc, si.Image, si.Count, si.X, si.Y, si.Image))
+			}
+		}
+		buf.WriteString("\n")
+	}
+	buf.WriteString("---\n")
+	//writew to file
+	os.WriteFile(fileName, buf.Bytes(), 0644)
+	return nil
 }

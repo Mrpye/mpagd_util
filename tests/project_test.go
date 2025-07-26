@@ -527,3 +527,32 @@ func TestBuildProjectInfoJson(t *testing.T) {
 	}
 	fmt.Println(output)
 }
+
+func TestDocumentProject(t *testing.T) {
+	filePath := "../projects/splat/splat.apj" // Replace with the actual file path
+	apjFile := mpagd.NewAPJFile(filePath)
+	err := apjFile.ReadAPJ()
+	if err != nil {
+		t.Fatalf("Error reading APJ file: %v", err)
+	}
+
+	// Redirect stdout to capture output
+
+	output, err := apjFile.BuildProjectInfoJson()
+	if err != nil {
+		t.Fatalf("Error building project info JSON: %v", err)
+	}
+
+	err = mpagd.BuildProjectReadme("../projects/splat/README.md", []byte(output))
+	if err != nil {
+		t.Fatalf("Error building project README: %v", err)
+	}
+
+	if !strings.Contains(output, `"blocks"`) || !strings.Contains(output, `"sprites"`) || !strings.Contains(output, `"screens"`) {
+		t.Errorf("BuildProjectInfoJson output missing expected sections: %s", output)
+	}
+	if !strings.Contains(output, `"objects"`) || !strings.Contains(output, `"maps"`) || !strings.Contains(output, `"fonts"`) {
+		t.Errorf("BuildProjectInfoJson output missing expected counts: %s", output)
+	}
+	fmt.Println(output)
+}

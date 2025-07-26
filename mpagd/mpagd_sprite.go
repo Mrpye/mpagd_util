@@ -533,6 +533,9 @@ func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath st
 	// Calculate layout and image dimensions
 	size := 16
 	columns := int(8)
+	if endIndex-startIndex < uint8(columns) {
+		columns = int(endIndex - startIndex)
+	}
 	imageWidth, imageHeight := CalcImageSize(startIndex, endIndex, columns, size)
 
 	var err error
