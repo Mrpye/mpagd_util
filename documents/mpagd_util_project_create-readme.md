@@ -1,13 +1,13 @@
-## mpagd_util project purge
+## mpagd_util project create-readme
 
-Purge all backup files.
+Generate a README file for the project.
 
 ### Synopsis
 
-Delete all backup files for the project.
+Build a Markdown README file for the project using its data.
 
 ```
-mpagd_util project purge [project file] [flags]
+mpagd_util project create-readme [project file] [output readme file] [flags]
 ```
 
 ### Options inherited from parent commands
