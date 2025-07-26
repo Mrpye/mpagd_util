@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-var appVersion = "0.1.6"
+var appVersion = "0.1.7"
 var noColor = false
 
 // RootCmd represents the base command when called without any subcommands
