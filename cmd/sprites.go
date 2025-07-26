@@ -299,6 +299,7 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 	var frame uint8
 	var reorderStr string
 	var offset int
+	var seperate bool
 	var cmd = &cobra.Command{
 		Use:   "render-bmp [project file] [[start block]] [[end block]] [output file]",
 		Short: "Render sprites to a bitmap file.",
@@ -353,8 +354,14 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 			if reorderStr != "" {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
 			}
-			if err := apjFile.RenderSpriteToBitmap(uint8(startIndex), uint8(endIndex), outputFile, reorder, offset); err != nil {
-				return fmt.Errorf("failed to render sprite to bitmap: %w", err)
+			if seperate {
+				if err := apjFile.RenderSpriteToSeperateBitmap(uint8(startIndex), uint8(endIndex), outputFile, reorder, offset); err != nil {
+					return fmt.Errorf("failed to render sprite to separate bitmaps: %w", err)
+				}
+			} else {
+				if err := apjFile.RenderSpriteToBitmap(uint8(startIndex), uint8(endIndex), outputFile, reorder, offset); err != nil {
+					return fmt.Errorf("failed to render sprite to bitmap: %w", err)
+				}
 			}
 			//}
 
@@ -363,6 +370,7 @@ func Cmd_RenderSpriteToBitmap() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
+	cmd.Flags().BoolVarP(&seperate, "seprate", "s", false, "Render to seperate files")
 	cmd.Flags().Uint8VarP(&frame, "frame", "f", 0, "Sprite frame to render")
 	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd

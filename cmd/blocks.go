@@ -327,6 +327,7 @@ func Cmd_RenderBlock() *cobra.Command {
 func Cmd_RenderBlocksToBitmap() *cobra.Command {
 	var reorderStr string
 	var offset int
+	var seperate bool
 	var cmd = &cobra.Command{
 		Use:   "render-bmp [project file] [[start block]] [[end block]] [output file]",
 		Short: "Render blocks to a bitmap file.",
@@ -383,6 +384,16 @@ func Cmd_RenderBlocksToBitmap() *cobra.Command {
 				reorder = mpagd.CSVToIntSlice(reorderStr)
 				mpagd.LogMessage("Cmd_RenderBlocksToBitmap", fmt.Sprintf("Reordering blocks: %v", reorder), "ok", noColor)
 			}
+			if seperate {
+				if err := apjFile.RenderBlockToSeperateBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder, offset); err != nil {
+					return fmt.Errorf("failed to render blocks to separate bitmaps: %w", err)
+				}
+			} else {
+				if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder, offset); err != nil {
+					return fmt.Errorf("failed to render blocks to bitmap: %w", err)
+				}
+			}
+
 			if err := apjFile.RenderBlockToBitmap(uint8(startIndex), uint8(endIndex), outputFileWithIndex, reorder, offset); err != nil {
 				return fmt.Errorf("failed to render blocks to bitmap: %w", err)
 			}
@@ -395,6 +406,7 @@ func Cmd_RenderBlocksToBitmap() *cobra.Command {
 
 	// Define flags for the command
 	cmd.Flags().StringVarP(&reorderStr, "reorder", "r", "", "Reorder the blocks in the output file")
+	cmd.Flags().BoolVarP(&seperate, "seprate", "s", false, "Render to seperate files")
 	cmd.Flags().IntVarP(&offset, "offset", "o", 0, "Offset for the start of the reordering blocks")
 	return cmd
 }

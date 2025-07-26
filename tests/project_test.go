@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -453,4 +454,76 @@ func TestScreenReorder(t *testing.T) {
 		compareSpectrumData(t, oldData[i], apjFile.Screens[newIndex].ScreenData[0], newIndex)
 	}
 
+}
+
+func TestExtractVariablesFromCodeFiles(t *testing.T) {
+	// Use the splat project code folder for testing
+	codeDir := "../projects/splat"
+	vars := mpagd.ExtractVariablesFromCodeFiles(codeDir)
+
+	// Check that some expected variables are found
+	if len(vars) == 0 {
+		t.Errorf("No variables found in code files")
+	}
+
+	// Check that variable C exists and has locations
+	if len(vars) == 0 {
+		t.Errorf("Variable  not found or has no locations")
+	}
+
+	// Check that all locations contain event type info
+	for _, v := range vars {
+		for _, loc := range v.Locations {
+			if !strings.Contains(loc, "EVENT") {
+				t.Errorf("Location does not contain event type: %s", loc)
+			}
+		}
+	}
+}
+
+func TestParseSpriteTypeFiles(t *testing.T) {
+	codeDir := "../projects/splat"
+	spriteTypes, err := mpagd.ParseSpriteTypeFiles(codeDir)
+	if err != nil {
+		t.Fatalf("Error parsing sprite type files: %v", err)
+	}
+	if len(spriteTypes) == 0 {
+		t.Errorf("No sprite types parsed from files")
+	}
+	// Check that at least one sprite type has event description and image descriptions
+	found := false
+	for _, st := range spriteTypes {
+		if st.EventType != "" && st.EventDescription != "" && len(st.ImageDescriptions) > 0 {
+			found = true
+			t.Logf("Parsed SpriteType: %s, %s, %d images", st.EventType, st.EventDescription, len(st.ImageDescriptions))
+			break
+		}
+	}
+	if !found {
+		t.Errorf("No valid SpriteType with event description and image descriptions found")
+	}
+}
+
+func TestBuildProjectInfoJson(t *testing.T) {
+	filePath := "../projects/splat/splat.apj" // Replace with the actual file path
+	apjFile := mpagd.NewAPJFile(filePath)
+	err := apjFile.ReadAPJ()
+	if err != nil {
+		t.Fatalf("Error reading APJ file: %v", err)
+	}
+
+	// Redirect stdout to capture output
+
+	output, err := apjFile.BuildProjectInfoJson()
+	if err != nil {
+		t.Fatalf("Error building project info JSON: %v", err)
+	}
+
+	if !strings.Contains(output, `"blocks"`) || !strings.Contains(output, `"sprites"`) || !strings.Contains(output, `"screens"`) {
+		t.Errorf("BuildProjectInfoJson output missing expected sections: %s", output)
+	}
+	if !strings.Contains(output, `"objects"`) || !strings.Contains(output, `"maps"`) || !strings.Contains(output, `"fonts"`) {
+		t.Errorf("BuildProjectInfoJson output missing expected counts: %s", output)
+	}
+	fmt.Println(output)
 }

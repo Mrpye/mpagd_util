@@ -500,6 +500,28 @@ func (apj *APJFile) GetReorderedSprites(order []int, offset int) ([]Sprite, erro
 
 	return newSprites, nil
 }
+func (apj *APJFile) RenderSpriteToSeperateBitmap(startIndex, endIndex uint8, ImagePath string, reorder []int, offset int) error {
+	// Validate sprite indexes
+	if startIndex >= uint8(len(apj.Sprites)) || endIndex > uint8(len(apj.Sprites)) || startIndex >= endIndex {
+		return fmt.Errorf("sprite index range out of bounds: %d-%d", startIndex, endIndex)
+	}
+
+	if _, err := os.Stat(ImagePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(ImagePath, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create directory for block images: %s", err)
+		}
+	}
+
+	// Create separate bitmap files for each sprite
+	for i := startIndex; i < endIndex; i++ {
+		spriteFilePath := fmt.Sprintf("%s/sprite_%d.png", ImagePath, i)
+		if err := apj.RenderSpriteToBitmap(i, i+1, spriteFilePath, reorder, offset); err != nil {
+			return fmt.Errorf("failed to render sprite %d to bitmap: %s", i, err)
+		}
+	}
+
+	return nil
+}
 
 // RenderSpriteToBitmap renders a range of sprites to a bitmap file
 func (apj *APJFile) RenderSpriteToBitmap(startIndex, endIndex uint8, filePath string, reorder []int, offset int) error {

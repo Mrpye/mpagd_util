@@ -303,7 +303,30 @@ func (apj *APJFile) RenderBlockToTerminal(start, end int, reorder []int) error {
 	return nil
 }
 
-// RenderBlockToBitmap renders blocks to a bitmap file.
+func (apj *APJFile) RenderBlockToSeperateBitmap(startIndex, endIndex uint8, ImagePath string, reorder []int, offset int) error {
+
+	if startIndex >= uint8(len(apj.Blocks)) || endIndex > uint8(len(apj.Blocks)) || startIndex >= endIndex {
+		return fmt.Errorf("blocks index range out of bounds: %d-%d", startIndex, endIndex)
+	}
+
+	// Create a directory for the block images
+	// check if the directory exists, if not create it
+	if _, err := os.Stat(ImagePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(ImagePath, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create directory for block images: %s", err)
+		}
+	}
+	// Loop through the specified range of blocks
+	for i := startIndex; i < endIndex; i++ {
+		blockFilePath := fmt.Sprintf("%s/block_%d.png", ImagePath, i)
+		if err := apj.RenderBlockToBitmap(i, i, blockFilePath, reorder, offset); err != nil {
+			return fmt.Errorf("failed to render block %d to bitmap: %s", i,
+				err)
+		}
+	}
+	return nil
+}
+
 func (apj *APJFile) RenderBlockToBitmap(startIndex, endIndex uint8, filePath string, reorder []int, offset int) error {
 	// Validate sprite indexes
 	if startIndex >= uint8(len(apj.Blocks)) || endIndex > uint8(len(apj.Blocks)) || startIndex >= endIndex {

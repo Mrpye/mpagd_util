@@ -1,10 +1,15 @@
 package mpagd
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/Mrpye/mpagd_util/project_template"
@@ -115,4 +120,424 @@ func (apj *APJFile) DisplayStats() {
 	fmt.Printf("Maps: %d\n", len(apj.Map.Map))
 	fmt.Printf("Fonts: %d\n", len(apj.Fonts))
 
+}
+
+type BlocksDoc struct {
+	Count int             `json:"blocks"`
+	Info  []BlocksDocInfo `json:"info"` // List of block documentation info
+}
+type BlocksDocInfo struct {
+	ID        uint8  `json:"id"`
+	Type      string `json:"type"`
+	ForeColor string `json:"foreground_color"`
+	BackColor string `json:"background_color"`
+}
+type SpriteDoc struct {
+	Count int             `json:"sprites"`
+	Info  []SpriteDocInfo `json:"info"` // List of sprite documentation info
+}
+type SpriteDocInfo struct {
+	ID          uint8  `json:"id"`
+	Description string `json:"description"`
+	Frames      uint8  `json:"frames"`
+}
+
+type ScreenDoc struct {
+	Count int             `json:"screens"`
+	Info  []ScreenDocInfo `json:"info"` // List of screen documentation info
+}
+
+type ScreenDocInfo struct {
+	ID          uint8                         `json:"id"`
+	Description string                        `json:"description"`
+	BlockTypes  map[string]uint8              `json:"block_types"`
+	Sprites     map[uint8]ScreenSpriteDocInfo `json:"sprite_info"`
+}
+
+type ScreenSpriteDocInfo struct {
+	Count  int   `json:"count"`
+	Type   uint8 `json:"type"`   // Type of the sprite
+	Image  uint8 `json:"image"`  // Image ID associated with the sprite
+	Screen uint8 `json:"screen"` // Screen ID where the sprite is located
+	X      uint8 `json:"x"`      // X-coordinate of the sprite
+	Y      uint8 `json:"y"`      // Y-coordinate of the sprite
+}
+
+type Variables struct {
+	Variable    string   `json:"variable"`
+	Description string   `json:"description"` // Description of the variable
+	Locations   []string `json:"locations"`   // Type of the variable
+	Scope       string   `json:"scope"`       // Scope of the variable
+}
+type SpriteTypeImage struct {
+	Image       string   `json:"image"`
+	Description string   `json:"description"`
+	FrameInfo   []string `json:"frame_info"`
+}
+
+type SpriteFrameDesc struct {
+	FrameRange  string `json:"frame_range"` // Frame range in the format "start-end"
+	Description string `json:"description"`
+}
+
+type SpriteImageDesc struct {
+	ImageID    int               `json:"image_id"`    // Image ID of the sprite
+	ImageName  string            `json:"image_name"`  // Image name of the sprite
+	FrameDescs []SpriteFrameDesc `json:"frame_descs"` // Frame descriptions for the sprite
+}
+
+type SpriteType struct {
+	EventType         string            `json:"event_type"`         // Type of the sprite event
+	EventDescription  string            `json:"event_description"`  // Description of the sprite event
+	ImageDescriptions []SpriteImageDesc `json:"image_descriptions"` // List of images and their frames
+}
+type ProjectInfo struct {
+	Blocks     BlocksDoc    `json:"blocks"`
+	Sprites    SpriteDoc    `json:"sprites"`
+	Screens    ScreenDoc    `json:"screens"`
+	Objects    int          `json:"objects"`
+	Maps       int          `json:"maps"`
+	Fonts      int          `json:"fonts"`
+	Variables  []Variables  `json:"variables"`
+	SpriteType []SpriteType `json:"sprite_type"`
+}
+
+func (apj *APJFile) BuildProjectInfoJson() (string, error) {
+	//Extract the path from the APJFile
+	if apj.FilePath == "" {
+		return "", errors.New("project file path is empty")
+	}
+	directoryPath := filepath.Dir(apj.FilePath)
+	if directoryPath == "" {
+		return "", errors.New("project file path is empty, cannot build project info")
+	}
+
+	projectInfo := ProjectInfo{
+		Blocks: BlocksDoc{
+			Count: len(apj.Blocks),
+			Info:  make([]BlocksDocInfo, 0, len(apj.Blocks)),
+		},
+		Sprites: SpriteDoc{
+			Count: len(apj.Sprites),
+			Info:  make([]SpriteDocInfo, 0, len(apj.Sprites)),
+		},
+		Screens: ScreenDoc{
+			Count: len(apj.Screens),
+			Info:  make([]ScreenDocInfo, 0, len(apj.Screens)),
+		},
+		Objects:    len(apj.Objects),
+		Maps:       len(apj.Map.Map),
+		Fonts:      len(apj.Fonts),
+		Variables:  ExtractVariablesFromCodeFiles(directoryPath),
+		SpriteType: make([]SpriteType, 0),
+	}
+
+	// Blocks info
+	for _, block := range apj.Blocks {
+		attr := block.Spectrum[len(block.Spectrum)-1]
+		fg, bg := SpectrumAttrToColors(attr)
+		projectInfo.Blocks.Info = append(projectInfo.Blocks.Info, BlocksDocInfo{
+			ID:   block.ID,
+			Type: GetBlockTypeByTypeID(block.Type),
+			ForeColor: func() string {
+				r, g, b, a := fg.RGBA()
+				return fmt.Sprintf("rgba(%d,%d,%d,%d)", r, g, b, a)
+			}(),
+			BackColor: func() string {
+				r, g, b, a := bg.RGBA()
+				return fmt.Sprintf("rgba(%d,%d,%d,%d)", r, g, b, a)
+			}(),
+		})
+	}
+
+	spriteTypes, err := ParseSpriteTypeFiles(directoryPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse sprite type files: %w", err)
+	}
+	projectInfo.SpriteType = spriteTypes
+	// Sprites info
+	for _, sprite := range apj.Sprites {
+		projectInfo.Sprites.Info = append(projectInfo.Sprites.Info, SpriteDocInfo{
+			ID:          sprite.SpriteID,
+			Description: "",
+			Frames:      sprite.Frames,
+		})
+	}
+
+	// Screens info
+	for _, screen := range apj.Screens {
+		blockTypes := make(map[string]uint8)
+		spriteTypes := make(map[uint8]ScreenSpriteDocInfo)
+
+		// Collect block types
+		for _, row := range screen.ScreenData {
+			for _, blockID := range row {
+				blockType := GetBlockTypeByTypeID(apj.Blocks[blockID].Type)
+				if _, exists := blockTypes[blockType]; !exists {
+					blockTypes[blockType] = blockID
+				}
+			}
+		}
+
+		// Collect sprite info for this screen
+		for _, spriteInfo := range apj.SpriteInfo {
+			if spriteInfo.Screen != screen.ScreenID {
+				continue
+			}
+			spriteID := spriteInfo.Image
+			if int(spriteID) >= len(apj.Sprites) {
+				continue
+			}
+			if s, exists := spriteTypes[spriteInfo.Type]; exists {
+				s.Count++
+				spriteTypes[spriteInfo.Type] = s
+			} else {
+				spriteTypes[spriteInfo.Type] = ScreenSpriteDocInfo{
+					Count:  1,
+					Type:   spriteInfo.Type,
+					Image:  spriteID,
+					Screen: screen.ScreenID,
+					X:      spriteInfo.X,
+					Y:      spriteInfo.Y,
+				}
+			}
+		}
+
+		projectInfo.Screens.Info = append(projectInfo.Screens.Info, ScreenDocInfo{
+			ID:          screen.ScreenID,
+			Description: "",
+			BlockTypes:  blockTypes,
+			Sprites:     spriteTypes,
+		})
+	}
+
+	//marshal the projectInfo into JSON
+	jsonData, err := json.MarshalIndent(projectInfo, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal project info: %w", err)
+	}
+	return string(jsonData), nil
+}
+
+// ExtractVariablesFromCodeFiles scans code files for variables named A-Z and documents their file locations.
+func ExtractVariablesFromCodeFiles(codeDir string) []Variables {
+	variableMap := make(map[string]Variables)
+	varNames := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	varRegex := regexp.MustCompile(`\b([A-Z])\b`)
+
+	files, err := ioutil.ReadDir(codeDir)
+	if err != nil {
+		fmt.Printf("Error reading code directory: %v\n", err)
+		return nil
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		// Only process .aXX files
+		if !strings.HasSuffix(file.Name(), ".a00") &&
+			!strings.HasSuffix(file.Name(), ".a01") &&
+			!strings.HasSuffix(file.Name(), ".a02") &&
+			!strings.HasSuffix(file.Name(), ".a03") &&
+			!strings.HasSuffix(file.Name(), ".a04") &&
+			!strings.HasSuffix(file.Name(), ".a05") &&
+			!strings.HasSuffix(file.Name(), ".a06") &&
+			!strings.HasSuffix(file.Name(), ".a07") &&
+			!strings.HasSuffix(file.Name(), ".a08") &&
+			!strings.HasSuffix(file.Name(), ".a09") &&
+			!strings.HasSuffix(file.Name(), ".a10") &&
+			!strings.HasSuffix(file.Name(), ".a11") &&
+			!strings.HasSuffix(file.Name(), ".a12") &&
+			!strings.HasSuffix(file.Name(), ".a13") &&
+			!strings.HasSuffix(file.Name(), ".a14") &&
+			!strings.HasSuffix(file.Name(), ".a15") &&
+			!strings.HasSuffix(file.Name(), ".a16") &&
+			!strings.HasSuffix(file.Name(), ".a17") &&
+			!strings.HasSuffix(file.Name(), ".a18") &&
+			!strings.HasSuffix(file.Name(), ".a19") &&
+			!strings.HasSuffix(file.Name(), ".a20") {
+			continue
+		}
+
+		content, err := ioutil.ReadFile(filepath.Join(codeDir, file.Name()))
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(content), "\n")
+		eventType := ""
+		if len(lines) > 0 {
+			eventType = strings.TrimSpace(lines[0])
+		}
+		seen := make(map[string]bool)
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			// Only check for global variable assignments (LET X = ...) at the top level
+			if strings.HasPrefix(trimmed, "LET ") {
+				// Example: LET S = 0      ; seconds
+				parts := strings.SplitN(trimmed, "=", 2)
+				if len(parts) == 2 {
+					left := strings.TrimSpace(parts[0][4:]) // after "LET "
+					if len(left) == 1 && strings.Contains(varNames, left) {
+						varName := left
+						comment := ""
+						if idx := strings.Index(parts[1], ";"); idx != -1 {
+							comment = strings.TrimSpace(parts[1][idx+1:])
+						}
+						location := fmt.Sprintf("%s (%s)", file.Name(), eventType)
+						if v, ok := variableMap[varName]; ok {
+							found := false
+							for _, loc := range v.Locations {
+								if loc == location {
+									found = true
+									break // Skip if location already exists
+								}
+							}
+							if !found {
+								v.Locations = append(v.Locations, location)
+							}
+							scope := "local"
+							if eventType == "EVENT RESTARTSCREEN" || eventType == "EVENT GAMEINIT" {
+								scope = "global"
+								v.Scope = scope
+								if comment != "" {
+									v.Description = comment // store comment in Scope for documentation
+								}
+							}
+							variableMap[varName] = v
+						} else {
+							scope := "local"
+							if eventType == "EVENT RESTARTSCREEN" || eventType == "EVENT GAMEINIT" {
+								scope = "global"
+							}
+							variableMap[varName] = Variables{
+								Variable:  varName,
+								Locations: []string{location},
+								Scope:     scope,
+							}
+						}
+						seen[varName] = true
+					}
+				}
+			}
+		}
+		// Also scan for usage elsewhere in the file
+		matches := varRegex.FindAllStringSubmatch(string(content), -1)
+		for _, match := range matches {
+			varName := match[1]
+			if strings.Contains(varNames, varName) && !seen[varName] {
+				seen[varName] = true
+				location := fmt.Sprintf("%s (%s)", file.Name(), eventType)
+				// If the variable already exists, append the location
+				// Otherwise, create a new entry with the variable name and location
+				// and set the scope based on the event type
+				// If the variable already exists, append the location
+
+				if v, ok := variableMap[varName]; ok {
+					//check if location already 	exist in v.Locations
+					found := false
+					for _, loc := range v.Locations {
+						if loc == location {
+							found = true
+							break // Skip if location already exists
+						}
+					}
+					if !found {
+						v.Locations = append(v.Locations, location)
+						variableMap[varName] = v
+					}
+				} else {
+					scope := "local"
+					if eventType == "EVENT RESTARTSCREEN" || eventType == "EVENT GAMEINIT" {
+						scope = "global"
+					}
+					variableMap[varName] = Variables{
+						Variable:  varName,
+						Locations: []string{location},
+						Scope:     scope,
+					}
+				}
+			}
+		}
+	}
+	// Convert the map to a slice for easier processing
+	var variableMapSlice []Variables
+	for _, v := range variableMap {
+		if v.Variable == "" {
+			continue // Skip empty variable entries
+		}
+		variableMapSlice = append(variableMapSlice, v)
+	}
+	// Sort the slice by variable name for consistency
+	if len(variableMapSlice) > 0 {
+		sort.Slice(variableMapSlice, func(i, j int) bool {
+			return variableMapSlice[i].Variable < variableMapSlice[j].Variable
+		})
+	}
+
+	return variableMapSlice
+}
+
+// ParseSpriteTypeFiles reads EVENT SPRITETYPE files a00 to a08 and parses header comments into SpriteType structs.
+func ParseSpriteTypeFiles(codeDir string) ([]SpriteType, error) {
+	var spriteTypes []SpriteType
+	for i := 0; i <= 8; i++ {
+		filename := filepath.Join(codeDir, fmt.Sprintf("splat.a%02d", i))
+		contentBytes, err := ioutil.ReadFile(filename)
+		if err != nil {
+			// skip missing files
+			continue
+		}
+		content := string(contentBytes)
+		lines := strings.Split(content, "\n")
+		var eventType, eventDesc string
+		var imageDescs []SpriteImageDesc
+
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if strings.HasPrefix(line, "EVENT ") {
+				eventType = strings.TrimPrefix(line, "EVENT ")
+			}
+			if strings.HasPrefix(line, ";Event Description:") {
+				eventDesc = strings.TrimSpace(strings.TrimPrefix(line, ";Event Description:"))
+			}
+			if strings.HasPrefix(line, ";Image Description:") {
+				imgDesc := strings.TrimSpace(strings.TrimPrefix(line, ";Image Description:"))
+				// Example: IMAGE 0,Player Left, Frame: (0-1,Player Idle),(1-2,Start Jump),(3,Fly)
+				parts := strings.SplitN(imgDesc, ",", 3)
+				if len(parts) >= 3 {
+					imageIDStr := strings.TrimPrefix(parts[0], "IMAGE ")
+					imageID := 0
+					fmt.Sscanf(imageIDStr, "%d", &imageID)
+					imageName := strings.TrimSpace(parts[1])
+					framePart := strings.TrimSpace(parts[2])
+					framePart = strings.TrimPrefix(framePart, "Frame:")
+					frameDescs := []SpriteFrameDesc{}
+					for _, frameDesc := range strings.Split(framePart, "),") {
+						frameDesc = strings.TrimSpace(frameDesc)
+						frameDesc = strings.TrimPrefix(frameDesc, "(")
+						frameDesc = strings.TrimSuffix(frameDesc, ")")
+						frameFields := strings.SplitN(frameDesc, ",", 2)
+						if len(frameFields) == 2 {
+							frameDescs = append(frameDescs, SpriteFrameDesc{
+								FrameRange:  strings.TrimSpace(frameFields[0]),
+								Description: strings.TrimSpace(frameFields[1]),
+							})
+						}
+					}
+					imageDescs = append(imageDescs, SpriteImageDesc{
+						ImageID:    imageID,
+						ImageName:  imageName,
+						FrameDescs: frameDescs,
+					})
+				}
+			}
+		}
+		spriteTypes = append(spriteTypes, SpriteType{
+			EventType:         eventType,
+			EventDescription:  eventDesc,
+			ImageDescriptions: imageDescs,
+		})
+	}
+	return spriteTypes, nil
 }

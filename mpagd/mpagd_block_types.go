@@ -8,6 +8,7 @@ var IdToBlockType = map[uint8]string{
 	3: "LADDERBLOCK",
 	4: "FODDERBLOCK",
 	5: "DEADLYBLOCK",
+	6: "CUSTOMBLOCK", // Custom block type, can be used for special purposes
 	// Add other block types as needed
 }
 
@@ -19,6 +20,7 @@ var BlockTypeToId = map[string]uint8{
 	"LADDERBLOCK":   3,
 	"FODDERBLOCK":   4,
 	"DEADLYBLOCK":   5,
+	"CUSTOMBLOCK":   6,
 	// Add other block types as needed
 }
 
